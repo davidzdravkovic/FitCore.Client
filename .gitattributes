@@ -1,0 +1,7 @@
+# Prefer Dart in GitHub language stats; platform runners are Flutter boilerplate.
+android/** linguist-generated=true
+ios/** linguist-generated=true
+linux/** linguist-generated=true
+macos/** linguist-generated=true
+windows/** linguist-generated=true
+web/** linguist-vendored=true
