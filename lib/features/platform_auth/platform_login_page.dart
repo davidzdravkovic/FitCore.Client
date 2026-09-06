@@ -97,7 +97,7 @@ class _PlatformLoginPageState extends State<PlatformLoginPage> {
                         ),
                       ),
                       const SizedBox(height: 40),
-                      TextFormField(
+                        TextFormField(
                         autovalidateMode: AutovalidateMode.onUserInteraction,
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,

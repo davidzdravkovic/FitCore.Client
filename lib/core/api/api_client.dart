@@ -41,6 +41,10 @@ class ApiClient {
       headers['Authorization'] = 'Bearer $_accessToken';
     }
 
+    if (useAuth && !hadToken) {
+    throw ApiException('Not signed in', statusCode: 401);
+    }
+
     try {
       final response = await _dio.request<dynamic>(
         path,
@@ -62,6 +66,9 @@ class ApiClient {
         statusCode: status,
       );
     }
+    catch (e) {
+    throw ApiException('Invalid response from server');
+}
   }
 
   String? _messageFrom(dynamic data) {

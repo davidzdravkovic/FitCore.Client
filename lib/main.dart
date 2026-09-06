@@ -1,4 +1,5 @@
 import 'package:fitcore_client/core/router/app_router.dart';
+import 'package:fitcore_client/core/time/time_zones.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
@@ -6,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 void main() {
   usePathUrlStrategy();
+  TimeZones.initialize();
   runApp(const MyApp());
 }
 
