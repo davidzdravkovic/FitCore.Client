@@ -1,12 +1,29 @@
+import 'package:fitcore_client/core/auth/auth_session.dart';
 import 'package:fitcore_client/features/platform_auth/platform_login_page.dart';
 import 'package:fitcore_client/features/platform_auth/platform_verify_page.dart';
 import 'package:fitcore_client/features/platform_dashboard/platform_dashboard_page.dart';
 import 'package:fitcore_client/features/tenant_dashboard/tenant_dashboard_page.dart';
 import 'package:fitcore_client/features/tenant_registry/tenant_registry_page.dart';
+import 'package:fitcore_client/features/tenant_login/tenant_login_page.dart';
 import 'package:go_router/go_router.dart';
 
 final GoRouter appRouter = GoRouter(
   initialLocation: '/platform/login',
+  redirect: (context, state) {
+    final path = state.uri.path;
+
+    if (path == '/platform') {
+      if (!AuthSession.isPlatformAdmin) return '/platform/login';
+      return null;
+    }
+
+    if (path == '/tenant') {
+      if (!AuthSession.isTenantOwner) return '/tenant/login';
+      return null;
+    }
+
+    return null;
+  },
   routes: [
     GoRoute(
       path: '/',
@@ -33,6 +50,10 @@ final GoRouter appRouter = GoRouter(
         final token = state.uri.queryParameters['token'];
         return TenantRegistryPage(token: token);
       },
+    ),
+    GoRoute(
+      path: '/tenant/login',
+      builder: (context, state) => const TenantLoginPage(),
     ),
     GoRoute(
       path: '/tenant',

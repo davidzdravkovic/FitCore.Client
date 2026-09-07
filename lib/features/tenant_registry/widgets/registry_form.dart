@@ -37,8 +37,8 @@ class _RegistryFormState extends State<RegistryForm> {
   bool _obscurePassword = true;
   bool _isSubmitting = false;
 
-  bool get _hasInvitationToken =>
-      widget.invitationToken != null && widget.invitationToken!.isNotEmpty;
+  bool get _hasInvitationToken => 
+                 widget.invitationToken != null && widget.invitationToken!.isNotEmpty;
 
   @override
   void initState() {

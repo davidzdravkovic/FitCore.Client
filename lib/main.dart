@@ -38,7 +38,7 @@ class MyApp extends StatelessWidget {
           filledButtonRadius: 10,
         ),
       ),
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.light,
       routerConfig: appRouter,
     );
   }

@@ -23,6 +23,8 @@ class ApiClient {
   final Dio _dio;
   String? _accessToken;
 
+  String? get accessToken => _accessToken;
+
   void setAccessToken(String? token) {
     _accessToken = token;
   }
@@ -42,7 +44,7 @@ class ApiClient {
     }
 
     if (useAuth && !hadToken) {
-    throw ApiException('Not signed in', statusCode: 401);
+      throw ApiException('Not signed in', statusCode: 401);
     }
 
     try {
@@ -65,10 +67,9 @@ class ApiClient {
         _messageFrom(e.response?.data) ?? e.message ?? 'Request failed',
         statusCode: status,
       );
+    } catch (e) {
+      throw ApiException('Invalid response from server');
     }
-    catch (e) {
-    throw ApiException('Invalid response from server');
-}
   }
 
   String? _messageFrom(dynamic data) {

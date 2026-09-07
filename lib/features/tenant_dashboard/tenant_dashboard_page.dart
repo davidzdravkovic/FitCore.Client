@@ -18,7 +18,7 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
   void _signOut() {
     ApiClient.instance.setAccessToken(null);
     TenantSession.clear();
-    context.go('/tenant/registry');
+    context.go('/tenant/login');
   }
 
   @override

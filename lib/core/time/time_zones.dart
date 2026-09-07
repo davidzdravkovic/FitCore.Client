@@ -21,35 +21,25 @@ class TimeZones {
   static bool contains(String id) => _ids.contains(id);
 
   static Future<String?> detectLocal() async {
-    final candidates = <String>[];
 
-    // Web: read Intl directly first. The plugin method channel can hang if the
-    // web plugin is not registered, which would block prefill forever.
-    final browserId = browser_tz.browserTimeZone();
-    if (browserId != null && browserId.isNotEmpty) {
-      candidates.add(browserId);
-    }
+    // Web uses Intl non-web stub returns null.
+    
+    final fromBrowser = _resolve(browser_tz.browserTimeZone());
+    if (fromBrowser != null) return fromBrowser;
 
+    // Fallback when browser path is missing/unusable (typical on mobile/desktop).
     try {
       final info = await FlutterTimezone.getLocalTimezone().timeout(
-        const Duration(milliseconds: 800),
+        const Duration(seconds: 2),
       );
-      if (info.identifier.isNotEmpty) {
-        candidates.add(info.identifier);
-      }
+      return _resolve(info.identifier);
     } catch (_) {
-      // Plugin may be unavailable (common on web); browser candidate is enough.
+      return null;
     }
-
-    for (final raw in candidates) {
-      final resolved = _resolve(raw);
-      if (resolved != null) return resolved;
-    }
-
-    return null;
   }
 
-  static String? _resolve(String raw) {
+  static String? _resolve(String? raw) {
+    if (raw == null) return null;
     final id = raw.trim();
     if (id.isEmpty) return null;
     if (contains(id)) return id;
