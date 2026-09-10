@@ -15,4 +15,8 @@ class AuthSession {
   static bool get isPlatformAdmin => hasRole('PlatformAdmin');
 
   static bool get isTenantOwner => hasRole('TenantOwner');
+
+  static bool get isTenantStaff => hasRole('TenantStaff');
+
+  static bool get isMember => hasRole('Member');
 }
