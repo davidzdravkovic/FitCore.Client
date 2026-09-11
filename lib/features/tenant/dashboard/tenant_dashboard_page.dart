@@ -1,21 +1,15 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/dashboard/models/dashboard_nav_item.dart';
 import 'package:fitcore_client/features/tenant/auth/tenant_session.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_shell.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-class TenantDashboardPage extends StatefulWidget {
-  const TenantDashboardPage({super.key});
+class TenantDashboardPage extends StatelessWidget {
+  const TenantDashboardPage({super.key, required this.child});
 
-  @override
-  State<TenantDashboardPage> createState() => _TenantDashboardPageState();
-}
+  final Widget child;
 
-class _TenantDashboardPageState extends State<TenantDashboardPage> {
-  DashboardSection _selected = DashboardSection.overview;
-
-  void _signOut() {
+  void _signOut(BuildContext context) {
     ApiClient.instance.setAccessToken(null);
     TenantSession.clear();
     context.go('/tenant/login');
@@ -27,13 +21,12 @@ class _TenantDashboardPageState extends State<TenantDashboardPage> {
     final firstName = TenantSession.ownerFirstName?.trim();
 
     return DashboardShell(
-      selected: _selected,
-      onSelect: (section) => setState(() => _selected = section),
       organizationName:
           (orgName != null && orgName.isNotEmpty) ? orgName : 'Your gym',
       ownerName:
           (firstName != null && firstName.isNotEmpty) ? firstName : 'Owner',
-      onSignOut: _signOut,
+      onSignOut: () => _signOut(context),
+      child: child,
     );
   }
 }

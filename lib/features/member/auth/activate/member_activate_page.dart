@@ -11,17 +11,14 @@ class MemberActivatePage extends StatelessWidget {
 
   final String? token;
 
+
+
   @override
   Widget build(BuildContext context) {
     final api = MemberAuthApi();
 
-    return InviteActivateForm(
-      token: token,
-      instructionsWithToken:
-          'Choose a password to finish setting up your account.',
-      missingTokenLoginLabel: 'Go to member sign in',
-      onMissingTokenLogin: () => context.go('/member/login'),
-      onSubmit: (inviteToken, password) async {
+
+   Future<void>  setPassword(String inviteToken, String password)  async{
         final response = await api.activate(
           InviteActivateRequest(token: inviteToken, password: password),
         );
@@ -34,6 +31,17 @@ class MemberActivatePage extends StatelessWidget {
           firstName: response.firstName,
         );
         context.go('/member');
+      }
+
+
+    return InviteActivateForm(
+      token: token,
+      instructionsWithToken:
+          'Choose a password to finish setting up your account.',
+      missingTokenLoginLabel: 'Go to member sign in',
+      onMissingTokenLogin: () => context.go('/member/login'),
+      onSubmit: (inviteToken, password) async {
+         await setPassword(inviteToken, password);
       },
     );
   }

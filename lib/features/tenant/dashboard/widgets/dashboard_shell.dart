@@ -1,41 +1,32 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
 import 'package:fitcore_client/features/tenant/dashboard/models/dashboard_nav_item.dart';
-import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_placeholder_panel.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_sidebar.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_top_bar.dart';
-import 'package:fitcore_client/features/tenant/dashboard/widgets/overview/overview_page.dart';
-import 'package:fitcore_client/features/tenant/members/widgets/members_panel.dart';
-import 'package:fitcore_client/features/tenant/staff/widgets/staff_panel.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class DashboardShell extends StatelessWidget {
   const DashboardShell({
     super.key,
-    required this.selected,
-    required this.onSelect,
     required this.organizationName,
     required this.ownerName,
     required this.onSignOut,
+    required this.child,
   });
 
-  final DashboardSection selected;
-  final ValueChanged<DashboardSection> onSelect;
   final String organizationName;
   final String ownerName;
   final VoidCallback onSignOut;
+  final Widget child;
 
   @override
   Widget build(BuildContext context) {
+    final path = GoRouterState.of(context).uri.path;
+    final selected = DashboardSection.fromLocation(path);
     final wide = MediaQuery.sizeOf(context).width >=
         DashboardLayout.sidebarCollapsedBreakpoint;
     final dividerColor =
         Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.55);
-
-    final sectionBody = _SectionBody(
-      section: selected,
-      ownerFirstName: ownerName,
-      organizationName: organizationName,
-    );
 
     if (wide) {
       return Scaffold(
@@ -46,7 +37,6 @@ class DashboardShell extends StatelessWidget {
                 width: DashboardLayout.sidebarWidth,
                 child: DashboardSidebar(
                   selected: selected,
-                  onSelect: onSelect,
                   organizationName: organizationName,
                 ),
               ),
@@ -59,7 +49,7 @@ class DashboardShell extends StatelessWidget {
                       ownerName: ownerName,
                       onSignOut: onSignOut,
                     ),
-                    Expanded(child: sectionBody),
+                    Expanded(child: child),
                   ],
                 ),
               ),
@@ -74,11 +64,8 @@ class DashboardShell extends StatelessWidget {
         child: SafeArea(
           child: DashboardSidebar(
             selected: selected,
-            onSelect: (section) {
-              onSelect(section);
-              Navigator.of(context).pop();
-            },
             organizationName: organizationName,
+            closeDrawerOnSelect: true,
           ),
         ),
       ),
@@ -93,66 +80,12 @@ class DashboardShell extends StatelessWidget {
                   onSignOut: onSignOut,
                   onOpenMenu: () => Scaffold.of(scaffoldContext).openDrawer(),
                 ),
-                Expanded(child: sectionBody),
+                Expanded(child: child),
               ],
             );
           },
         ),
       ),
     );
-  }
-}
-
-class _SectionBody extends StatelessWidget {
-  const _SectionBody({
-    required this.section,
-    required this.ownerFirstName,
-    required this.organizationName,
-  });
-
-  final DashboardSection section;
-  final String ownerFirstName;
-  final String organizationName;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (section) {
-      DashboardSection.overview => OverviewPage(
-          ownerFirstName: ownerFirstName,
-          organizationName: organizationName,
-        ),
-      DashboardSection.members => const MembersPanel(),
-      DashboardSection.memberships => const DashboardPlaceholderPanel(
-          title: 'Memberships',
-          description:
-              'Plans, renewals, and freezes will be managed from this section.',
-          icon: Icons.card_membership_outlined,
-        ),
-      DashboardSection.schedule => const DashboardPlaceholderPanel(
-          title: 'Schedule',
-          description:
-              'Classes, trainers, and recurring sessions will show up here.',
-          icon: Icons.calendar_today_outlined,
-        ),
-      DashboardSection.checkIns => const DashboardPlaceholderPanel(
-          title: 'Check-ins',
-          description:
-              'Front-desk and QR check-ins will be tracked in this workspace.',
-          icon: Icons.qr_code_scanner_outlined,
-        ),
-      DashboardSection.staff => const StaffPanel(),
-      DashboardSection.billing => const DashboardPlaceholderPanel(
-          title: 'Billing',
-          description:
-              'Invoices, payments, and failed charges will appear in this area.',
-          icon: Icons.payments_outlined,
-        ),
-      DashboardSection.settings => const DashboardPlaceholderPanel(
-          title: 'Settings',
-          description:
-              'Gym profile, timezone, and workspace preferences will go here.',
-          icon: Icons.settings_outlined,
-        ),
-    };
   }
 }

@@ -15,6 +15,21 @@ class StaffActivatePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final api = StaffAuthApi();
 
+    Future<void> setPassword(String inviteToken, String password) async {
+      final response = await api.activate(
+        InviteActivateRequest(token: inviteToken, password: password),
+      );
+
+      if (!context.mounted) return;
+
+      ApiClient.instance.setAccessToken(response.accessToken);
+      StaffSession.set(
+        organizationName: response.organizationName,
+        firstName: response.firstName,
+      );
+      context.go('/staff');
+    }
+
     return InviteActivateForm(
       token: token,
       instructionsWithToken:
@@ -22,18 +37,7 @@ class StaffActivatePage extends StatelessWidget {
       missingTokenLoginLabel: 'Go to staff sign in',
       onMissingTokenLogin: () => context.go('/staff/login'),
       onSubmit: (inviteToken, password) async {
-        final response = await api.activate(
-          InviteActivateRequest(token: inviteToken, password: password),
-        );
-
-        if (!context.mounted) return;
-
-        ApiClient.instance.setAccessToken(response.accessToken);
-        StaffSession.set(
-          organizationName: response.organizationName,
-          firstName: response.firstName,
-        );
-        context.go('/staff');
+        await setPassword(inviteToken, password);
       },
     );
   }

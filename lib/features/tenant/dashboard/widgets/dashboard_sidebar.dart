@@ -1,18 +1,19 @@
 import 'package:fitcore_client/features/tenant/dashboard/models/dashboard_nav_item.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class DashboardSidebar extends StatelessWidget {
   const DashboardSidebar({
     super.key,
     required this.selected,
-    required this.onSelect,
     required this.organizationName,
+    this.closeDrawerOnSelect = false,
   });
 
   final DashboardSection selected;
-  final ValueChanged<DashboardSection> onSelect;
   final String organizationName;
+  final bool closeDrawerOnSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +69,12 @@ class DashboardSidebar extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                     child: InkWell(
                       borderRadius: BorderRadius.circular(10),
-                      onTap: () => onSelect(item.section),
+                      onTap: () {
+                        context.go(item.section.location);
+                        if (closeDrawerOnSelect) {
+                          Navigator.of(context).pop();
+                        }
+                      },
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,

@@ -8,7 +8,33 @@ enum DashboardSection {
   checkIns,
   staff,
   billing,
-  settings,
+  settings;
+
+  String get location => switch (this) {
+        DashboardSection.overview => '/tenant',
+        DashboardSection.members => '/tenant/members',
+        DashboardSection.memberships => '/tenant/memberships',
+        DashboardSection.schedule => '/tenant/schedule',
+        DashboardSection.checkIns => '/tenant/check-ins',
+        DashboardSection.staff => '/tenant/staff',
+        DashboardSection.billing => '/tenant/billing',
+        DashboardSection.settings => '/tenant/settings',
+      };
+
+  static DashboardSection fromLocation(String path) {
+    // Longer prefixes first so /tenant/memberships ≠ /tenant/members.
+    if (path == '/tenant' || path == '/tenant/') return DashboardSection.overview;
+    if (path.startsWith('/tenant/memberships')) {
+      return DashboardSection.memberships;
+    }
+    if (path.startsWith('/tenant/members')) return DashboardSection.members;
+    if (path.startsWith('/tenant/schedule')) return DashboardSection.schedule;
+    if (path.startsWith('/tenant/check-ins')) return DashboardSection.checkIns;
+    if (path.startsWith('/tenant/staff')) return DashboardSection.staff;
+    if (path.startsWith('/tenant/billing')) return DashboardSection.billing;
+    if (path.startsWith('/tenant/settings')) return DashboardSection.settings;
+    return DashboardSection.overview;
+  }
 }
 
 class DashboardNavItem {
