@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fitcore_client/core/api/api_config.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
+import 'package:fitcore_client/core/auth/auth_refresh.dart';
 
 typedef JsonParser<T> = T Function(dynamic json);
 
@@ -26,7 +27,9 @@ class ApiClient {
   String? get accessToken => _accessToken;
 
   void setAccessToken(String? token) {
+    if (_accessToken == token) return;
     _accessToken = token;
+    AuthRefresh.instance.notifyAuthChanged();
   }
 
   Future<T> request<T>(

@@ -1,52 +1,35 @@
-import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
-import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/members_controller.dart';
 import 'package:fitcore_client/features/tenant/members/widgets/member_form.dart';
 import 'package:flutter/material.dart';
 
 class MembersPanel extends StatefulWidget {
-  const MembersPanel({super.key, this.membersApi});
+  const MembersPanel({super.key, this.controller});
 
-  final MembersApi? membersApi;
+  final MembersController? controller;
 
   @override
   State<MembersPanel> createState() => _MembersPanelState();
 }
 
 class _MembersPanelState extends State<MembersPanel> {
-  late final MembersApi _membersApi = widget.membersApi ?? MembersApi();
-
-  List<Member> _members = const [];
-  bool _isLoading = true;
-  String? _error;
+  late final MembersController _controller =
+      widget.controller ?? MembersController();
+  late final bool _ownsController = widget.controller == null;
 
   @override
   void initState() {
     super.initState();
-    _loadMembers();
+    _controller.load();
   }
 
-  Future<void> _loadMembers() async {
-    setState(() {
-      _isLoading = true;
-      _error = null;
-    });
-
-    try {
-      final members = await _membersApi.list();
-      if (!mounted) return;
-      setState(() {
-        _members = members;
-        _isLoading = false;
-      });
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _isLoading = false;
-      });
+  @override
+  void dispose() {
+    if (_ownsController) {
+      _controller.dispose();
     }
+    super.dispose();
   }
 
   Future<void> _openCreateMemberForm() async {
@@ -59,7 +42,7 @@ class _MembersPanelState extends State<MembersPanel> {
             width: 420,
             child: SingleChildScrollView(
               child: MemberForm(
-                membersApi: _membersApi,
+                membersApi: _controller.membersApi,
                 onCreated: (member) {
                   Navigator.of(dialogContext).pop(true);
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -84,23 +67,20 @@ class _MembersPanelState extends State<MembersPanel> {
     );
 
     if (created == true) {
-      await _loadMembers();
+      await _controller.load();
     }
   }
 
   Future<void> _inviteMember(Member member) async {
-    try {
-      await _membersApi.invite(member.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account invite sent to ${member.email}')),
-      );
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
-    }
+    final error = await _controller.invite(member);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          error ?? 'Account invite sent to ${member.email}',
+        ),
+      ),
+    );
   }
 
   Future<void> _deleteMember(Member member) async {
@@ -129,21 +109,15 @@ class _MembersPanelState extends State<MembersPanel> {
 
     if (confirmed != true) return;
 
-    try {
-      await _membersApi.delete(member.id);
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${member.firstName} ${member.lastName} deleted'),
+    final error = await _controller.delete(member);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          error ?? '${member.firstName} ${member.lastName} deleted',
         ),
-      );
-      await _loadMembers();
-    } on ApiException catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
-    }
+      ),
+    );
   }
 
   void _showImportComingSoon() {
@@ -159,90 +133,96 @@ class _MembersPanelState extends State<MembersPanel> {
   @override
   Widget build(BuildContext context) {
     const menuWidth = 220.0;
-    final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.all(DashboardLayout.pagePadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Align(
-            alignment: Alignment.topRight,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: _isLoading ? null : _loadMembers,
-                  icon: const Icon(Icons.people_outline),
-                  label: const Text('All members'),
-                ),
-                const SizedBox(width: 12),
-                MenuAnchor(
-                  crossAxisUnconstrained: false,
-                  consumeOutsideTap: true,
-                  alignmentOffset: const Offset(0, 4),
-                  style: const MenuStyle(
-                    alignment: AlignmentDirectional.bottomEnd,
-                    padding: WidgetStatePropertyAll(
-                      EdgeInsets.symmetric(vertical: 8),
+    return ListenableBuilder(
+      listenable: _controller,
+      builder: (context, _) {
+        final theme = Theme.of(context);
+
+        return Padding(
+          padding: const EdgeInsets.all(DashboardLayout.pagePadding),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Align(
+                alignment: Alignment.topRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: _controller.isLoading ? null : _controller.load,
+                      icon: const Icon(Icons.people_outline),
+                      label: const Text('All members'),
                     ),
-                  ),
-                  builder: (context, controller, child) {
-                    return FilledButton.icon(
-                      onPressed: () {
-                        if (controller.isOpen) {
-                          controller.close();
-                        } else {
-                          controller.open();
-                        }
+                    const SizedBox(width: 12),
+                    MenuAnchor(
+                      crossAxisUnconstrained: false,
+                      consumeOutsideTap: true,
+                      alignmentOffset: const Offset(0, 4),
+                      style: const MenuStyle(
+                        alignment: AlignmentDirectional.bottomEnd,
+                        padding: WidgetStatePropertyAll(
+                          EdgeInsets.symmetric(vertical: 8),
+                        ),
+                      ),
+                      builder: (context, controller, child) {
+                        return FilledButton.icon(
+                          onPressed: () {
+                            if (controller.isOpen) {
+                              controller.close();
+                            } else {
+                              controller.open();
+                            }
+                          },
+                          icon: const Icon(Icons.add),
+                          label: const Text('New'),
+                        );
                       },
-                      icon: const Icon(Icons.add),
-                      label: const Text('New'),
-                    );
-                  },
-                  menuChildren: [
-                    SizedBox(
-                      width: menuWidth,
-                      child: MenuItemButton(
-                        leadingIcon: const Icon(Icons.person_add_outlined),
-                        onPressed: _openCreateMemberForm,
-                        child: const Text('Add member'),
-                      ),
-                    ),
-                    SizedBox(
-                      width: menuWidth,
-                      child: MenuItemButton(
-                        leadingIcon: const Icon(Icons.upload_file_outlined),
-                        onPressed: _showImportComingSoon,
-                        child: const Text('Import members'),
-                      ),
+                      menuChildren: [
+                        SizedBox(
+                          width: menuWidth,
+                          child: MenuItemButton(
+                            leadingIcon: const Icon(Icons.person_add_outlined),
+                            onPressed: _openCreateMemberForm,
+                            child: const Text('Add member'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: menuWidth,
+                          child: MenuItemButton(
+                            leadingIcon: const Icon(Icons.upload_file_outlined),
+                            onPressed: _showImportComingSoon,
+                            child: const Text('Import members'),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(height: 24),
+              Expanded(child: _buildBody(theme)),
+            ],
           ),
-          const SizedBox(height: 24),
-          Expanded(child: _buildBody(theme)),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildBody(ThemeData theme) {
-    if (_isLoading) {
+    if (_controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_error != null) {
+    if (_controller.error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_error!, textAlign: TextAlign.center),
+            Text(_controller.error!, textAlign: TextAlign.center),
             const SizedBox(height: 12),
             FilledButton(
-              onPressed: _loadMembers,
+              onPressed: _controller.load,
               child: const Text('Retry'),
             ),
           ],
@@ -250,7 +230,7 @@ class _MembersPanelState extends State<MembersPanel> {
       );
     }
 
-    if (_members.isEmpty) {
+    if (_controller.members.isEmpty) {
       return Center(
         child: Text(
           'No members yet. Add your first member to get started.',
@@ -274,7 +254,7 @@ class _MembersPanelState extends State<MembersPanel> {
             DataColumn(label: Text('')),
           ],
           rows: [
-            for (final member in _members)
+            for (final member in _controller.members)
               DataRow(
                 cells: [
                   DataCell(Text('${member.firstName} ${member.lastName}')),
