@@ -1,7 +1,7 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/staff/api/staff_api.dart';
-import 'package:fitcore_client/features/tenant/staff/api/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
 import 'package:flutter/material.dart';
 
 class StaffForm extends StatefulWidget {
@@ -12,7 +12,7 @@ class StaffForm extends StatefulWidget {
   });
 
   final StaffApi? staffApi;
-  final ValueChanged<Staff>? onCreated;
+  final ValueChanged<StaffResponse>? onCreated;
 
   @override
   State<StaffForm> createState() => _StaffFormState();

@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/staff/api/staff_api.dart';
-import 'package:fitcore_client/features/tenant/staff/api/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
 import 'package:flutter/foundation.dart';
 
 /// Feature orchestration: widgets stay thin; HTTP stays in [StaffApi].
@@ -11,7 +11,7 @@ class StaffController extends ChangeNotifier {
 
   StaffApi get staffApi => _staffApi;
 
-  List<Staff> staff = const [];
+  List<StaffResponse> staff = const [];
   bool isLoading = false;
   String? error;
 
@@ -31,7 +31,7 @@ class StaffController extends ChangeNotifier {
     }
   }
 
-  Future<String?> invite(Staff person) async {
+  Future<String?> invite(StaffResponse person) async {
     try {
       await _staffApi.invite(person.id);
       return null;
@@ -40,7 +40,7 @@ class StaffController extends ChangeNotifier {
     }
   }
 
-  Future<String?> delete(Staff person) async {
+  Future<String?> delete(StaffResponse person) async {
     try {
       await _staffApi.delete(person.id);
       await load();

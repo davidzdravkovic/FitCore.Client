@@ -1,5 +1,5 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
-import 'package:fitcore_client/features/tenant/members/api/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
 import 'package:fitcore_client/features/tenant/members/members_controller.dart';
 import 'package:fitcore_client/features/tenant/members/widgets/member_form.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +71,7 @@ class _MembersPanelState extends State<MembersPanel> {
     }
   }
 
-  Future<void> _inviteMember(Member member) async {
+  Future<void> _inviteMember(MemberResponse member) async {
     final error = await _controller.invite(member);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +83,7 @@ class _MembersPanelState extends State<MembersPanel> {
     );
   }
 
-  Future<void> _deleteMember(Member member) async {
+  Future<void> _deleteMember(MemberResponse member) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {

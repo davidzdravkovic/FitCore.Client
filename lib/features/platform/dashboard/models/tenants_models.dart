@@ -1,5 +1,5 @@
-class Tenant {
-  const Tenant({
+class TenantResponse {
+  const TenantResponse({
     required this.id,
     required this.name,
     required this.businessEmail,
@@ -21,9 +21,9 @@ class Tenant {
 
   bool get isCancelled => status.toLowerCase() == 'cancelled';
 
-  factory Tenant.fromJson(dynamic json) {
+  factory TenantResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
-    return Tenant(
+    return TenantResponse(
       id: map['id'] as String? ?? '',
       name: map['name'] as String? ?? '',
       businessEmail: map['businessEmail'] as String? ?? '',

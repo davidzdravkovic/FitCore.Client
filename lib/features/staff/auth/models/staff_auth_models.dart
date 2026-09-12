@@ -1,5 +1,5 @@
-class TenantLoginRequest {
-  const TenantLoginRequest({
+class LoginStaffRequest {
+  const LoginStaffRequest({
     required this.email,
     required this.password,
   });
@@ -13,26 +13,41 @@ class TenantLoginRequest {
       };
 }
 
-class TenantLoginResponse {
-  const TenantLoginResponse({
+class ActivateStaffRequest {
+  const ActivateStaffRequest({
+    required this.token,
+    required this.password,
+  });
+
+  final String token;
+  final String password;
+
+  Map<String, dynamic> toJson() => {
+        'token': token,
+        'password': password,
+      };
+}
+
+class StaffSessionResponse {
+  const StaffSessionResponse({
     required this.message,
     required this.accessToken,
     required this.organizationName,
-    required this.ownerFirstName,
+    required this.firstName,
   });
 
   final String message;
   final String accessToken;
   final String organizationName;
-  final String ownerFirstName;
+  final String firstName;
 
-  factory TenantLoginResponse.fromJson(dynamic json) {
+  factory StaffSessionResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
-    return TenantLoginResponse(
+    return StaffSessionResponse(
       message: map['message'] as String? ?? '',
       accessToken: map['accessToken'] as String? ?? '',
       organizationName: map['organizationName'] as String? ?? '',
-      ownerFirstName: map['ownerFirstName'] as String? ?? '',
+      firstName: map['firstName'] as String? ?? '',
     );
   }
 }

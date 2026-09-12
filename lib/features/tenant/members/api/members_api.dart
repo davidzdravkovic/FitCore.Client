@@ -1,35 +1,35 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/members/api/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
 
 class MembersApi {
   MembersApi({ApiClient? client}) : _client = client ?? ApiClient.instance;
 
   final ApiClient _client;
 
-  Future<List<Member>> list() {
-    return _client.request<List<Member>>(
+  Future<List<MemberResponse>> list() {
+    return _client.request<List<MemberResponse>>(
       '/api/members',
       parse: (json) {
         final items = json as List<dynamic>? ?? const [];
-        return items.map(Member.fromJson).toList();
+        return items.map(MemberResponse.fromJson).toList();
       },
     );
   }
 
-  Future<Member> create(CreateMemberRequest request) {
-    return _client.request<Member>(
+  Future<MemberResponse> create(CreateMemberRequest request) {
+    return _client.request<MemberResponse>(
       '/api/members',
       method: 'POST',
       data: request.toJson(),
-      parse: Member.fromJson,
+      parse: MemberResponse.fromJson,
     );
   }
 
-  Future<void> invite(String id) {
-    return _client.request<void>(
+  Future<InviteMemberResponse> invite(String id) {
+    return _client.request<InviteMemberResponse>(
       '/api/members/$id/invite',
       method: 'POST',
-      parse: (_) {},
+      parse: InviteMemberResponse.fromJson,
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/core/auth/portal_auth_models.dart';
+import 'package:fitcore_client/features/staff/auth/models/staff_auth_models.dart';
+import 'package:fitcore_client/core/routing/staff_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/invite_activate_form.dart';
 import 'package:fitcore_client/features/staff/auth/api/staff_auth_api.dart';
 import 'package:fitcore_client/features/staff/auth/staff_session.dart';
@@ -17,7 +18,7 @@ class StaffActivatePage extends StatelessWidget {
 
     Future<void> setPassword(String inviteToken, String password) async {
       final response = await api.activate(
-        InviteActivateRequest(token: inviteToken, password: password),
+        ActivateStaffRequest(token: inviteToken, password: password),
       );
 
       if (!context.mounted) return;
@@ -27,7 +28,7 @@ class StaffActivatePage extends StatelessWidget {
         organizationName: response.organizationName,
         firstName: response.firstName,
       );
-      context.go('/staff');
+      context.go(StaffPaths.home);
     }
 
     return InviteActivateForm(
@@ -35,7 +36,7 @@ class StaffActivatePage extends StatelessWidget {
       instructionsWithToken:
           'Choose a password to finish setting up your staff access.',
       missingTokenLoginLabel: 'Go to staff sign in',
-      onMissingTokenLogin: () => context.go('/staff/login'),
+      onMissingTokenLogin: () => context.go(StaffPaths.login),
       onSubmit: (inviteToken, password) async {
         await setPassword(inviteToken, password);
       },

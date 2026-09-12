@@ -1,5 +1,5 @@
-class Staff {
-  const Staff({
+class StaffResponse {
+  const StaffResponse({
     required this.id,
     required this.firstName,
     required this.lastName,
@@ -11,9 +11,9 @@ class Staff {
   final String lastName;
   final String email;
 
-  factory Staff.fromJson(dynamic json) {
+  factory StaffResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
-    return Staff(
+    return StaffResponse(
       id: map['id'] as String? ?? '',
       firstName: map['firstName'] as String? ?? '',
       lastName: map['lastName'] as String? ?? '',
@@ -38,4 +38,17 @@ class CreateStaffRequest {
         'lastName': lastName,
         'email': email,
       };
+}
+
+class InviteStaffResponse {
+  const InviteStaffResponse({required this.message});
+
+  final String message;
+
+  factory InviteStaffResponse.fromJson(dynamic json) {
+    final map = json as Map<String, dynamic>? ?? {};
+    return InviteStaffResponse(
+      message: map['message'] as String? ?? '',
+    );
+  }
 }

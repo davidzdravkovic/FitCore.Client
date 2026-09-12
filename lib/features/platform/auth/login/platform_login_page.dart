@@ -1,7 +1,7 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/platform/auth/api/platform_auth_api.dart';
-import 'package:fitcore_client/features/platform/auth/api/platform_login_models.dart';
+import 'package:fitcore_client/features/platform/auth/models/platform_login_models.dart';
 import 'package:flutter/material.dart';
 
 class PlatformLoginPage extends StatefulWidget {

@@ -5,6 +5,7 @@ class JwtClaims {
 
   final Map<String, dynamic> _payload;
 
+// Valid token check
   static JwtClaims? tryParse(String? token) {
     if (token == null || token.isEmpty) return null;
 
@@ -22,9 +23,10 @@ class JwtClaims {
     }
   }
 
+// On valid token expiration check
   bool get isExpired {
     final exp = _payload['exp'];
-    if (exp is! num) return false;
+    if (exp is! num) return true;
     final expiresAt = DateTime.fromMillisecondsSinceEpoch(
       exp.toInt() * 1000,
       isUtc: true,
@@ -32,6 +34,7 @@ class JwtClaims {
     return DateTime.now().toUtc().isAfter(expiresAt);
   }
 
+// On valid token Role check
   String? get role {
     const roleUri =
         'http://schemas.microsoft.com/ws/2008/06/identity/claims/role';

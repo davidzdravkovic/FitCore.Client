@@ -1,3 +1,4 @@
+import 'package:fitcore_client/core/routing/tenant_paths.dart';
 import 'package:fitcore_client/features/tenant/auth/login/tenant_login_page.dart';
 import 'package:fitcore_client/features/tenant/auth/registry/tenant_registry_page.dart';
 import 'package:fitcore_client/features/tenant/auth/tenant_session.dart';
@@ -11,11 +12,11 @@ import 'package:go_router/go_router.dart';
 
 final List<RouteBase> tenantRoutes = [
   GoRoute(
-    path: '/tenant/login',
+    path: TenantPaths.login,
     builder: (context, state) => const TenantLoginPage(),
   ),
   GoRoute(
-    path: '/tenant/registry',
+    path: TenantPaths.registry,
     builder: (context, state) {
       final token = state.uri.queryParameters['token'];
       return TenantRegistryPage(token: token);
@@ -25,7 +26,7 @@ final List<RouteBase> tenantRoutes = [
     builder: (context, state, child) => TenantDashboardPage(child: child),
     routes: [
       GoRoute(
-        path: '/tenant',
+        path: TenantPaths.home,
         builder: (context, state) {
           final orgName = TenantSession.organizationName?.trim() ?? '';
           final firstName = TenantSession.ownerFirstName?.trim() ?? '';
@@ -36,11 +37,11 @@ final List<RouteBase> tenantRoutes = [
         },
       ),
       GoRoute(
-        path: '/tenant/members',
+        path: TenantPaths.members,
         builder: (context, state) => const MembersPanel(),
       ),
       GoRoute(
-        path: '/tenant/memberships',
+        path: TenantPaths.memberships,
         builder: (context, state) => const DashboardPlaceholderPanel(
           title: 'Memberships',
           description:
@@ -49,7 +50,7 @@ final List<RouteBase> tenantRoutes = [
         ),
       ),
       GoRoute(
-        path: '/tenant/schedule',
+        path: TenantPaths.schedule,
         builder: (context, state) => const DashboardPlaceholderPanel(
           title: 'Schedule',
           description:
@@ -58,7 +59,7 @@ final List<RouteBase> tenantRoutes = [
         ),
       ),
       GoRoute(
-        path: '/tenant/check-ins',
+        path: TenantPaths.checkIns,
         builder: (context, state) => const DashboardPlaceholderPanel(
           title: 'Check-ins',
           description:
@@ -67,11 +68,11 @@ final List<RouteBase> tenantRoutes = [
         ),
       ),
       GoRoute(
-        path: '/tenant/staff',
+        path: TenantPaths.staff,
         builder: (context, state) => const StaffPanel(),
       ),
       GoRoute(
-        path: '/tenant/billing',
+        path: TenantPaths.billing,
         builder: (context, state) => const DashboardPlaceholderPanel(
           title: 'Billing',
           description:
@@ -80,7 +81,7 @@ final List<RouteBase> tenantRoutes = [
         ),
       ),
       GoRoute(
-        path: '/tenant/settings',
+        path: TenantPaths.settings,
         builder: (context, state) => const DashboardPlaceholderPanel(
           title: 'Settings',
           description:

@@ -1,7 +1,8 @@
 import 'package:fitcore_client/core/api/api_client.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
+import 'package:fitcore_client/core/routing/platform_paths.dart';
 import 'package:fitcore_client/features/platform/auth/api/platform_auth_api.dart';
-import 'package:fitcore_client/features/platform/auth/api/platform_verify_models.dart';
+import 'package:fitcore_client/features/platform/auth/models/platform_verify_models.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,7 +58,7 @@ class _PlatformVerifyPageState extends State<PlatformVerifyPage> {
       ApiClient.instance.setAccessToken(response.accessToken);
 
       if (!mounted) return;
-      context.go('/platform');
+      context.go(PlatformPaths.home);
     } on ApiException catch (e) {
       if (!mounted) return;
       final expired = e.statusCode == 401 ||
@@ -133,7 +134,7 @@ class _PlatformVerifyPageState extends State<PlatformVerifyPage> {
                         ),
                         const SizedBox(height: 28),
                         FilledButton(
-                          onPressed: () => context.go('/platform/login'),
+                          onPressed: () => context.go(PlatformPaths.login),
                           style: FilledButton.styleFrom(
                             minimumSize: const Size.fromHeight(48),
                           ),

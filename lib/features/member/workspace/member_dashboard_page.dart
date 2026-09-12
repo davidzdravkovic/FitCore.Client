@@ -1,4 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
+import 'package:fitcore_client/core/routing/member_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/portal_placeholder_dashboard.dart';
 import 'package:fitcore_client/features/member/auth/member_session.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class MemberDashboardPage extends StatelessWidget {
       onSignOut: () {
         ApiClient.instance.setAccessToken(null);
         MemberSession.clear();
-        context.go('/member/login');
+        context.go(MemberPaths.login);
       },
     );
   }

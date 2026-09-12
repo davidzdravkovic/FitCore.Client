@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
-import 'package:fitcore_client/features/tenant/members/api/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
 import 'package:flutter/foundation.dart';
 
 /// Feature orchestration: widgets stay thin; HTTP stays in [MembersApi].
@@ -12,7 +12,7 @@ class MembersController extends ChangeNotifier {
 
   MembersApi get membersApi => _membersApi;
 
-  List<Member> members = const [];
+  List<MemberResponse> members = const [];
   bool isLoading = false;
   String? error;
 
@@ -32,7 +32,7 @@ class MembersController extends ChangeNotifier {
     }
   }
 
-  Future<String?> invite(Member member) async {
+  Future<String?> invite(MemberResponse member) async {
     try {
       await _membersApi.invite(member.id);
       return null;
@@ -41,7 +41,7 @@ class MembersController extends ChangeNotifier {
     }
   }
 
-  Future<String?> delete(Member member) async {
+  Future<String?> delete(MemberResponse member) async {
     try {
       await _membersApi.delete(member.id);
       await load();

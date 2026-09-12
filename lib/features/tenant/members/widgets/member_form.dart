@@ -1,7 +1,7 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
-import 'package:fitcore_client/features/tenant/members/api/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
 import 'package:flutter/material.dart';
 
 class MemberForm extends StatefulWidget {
@@ -12,7 +12,7 @@ class MemberForm extends StatefulWidget {
   });
 
   final MembersApi? membersApi;
-  final ValueChanged<Member>? onCreated;
+  final ValueChanged<MemberResponse>? onCreated;
 
   @override
   State<MemberForm> createState() => _MemberFormState();

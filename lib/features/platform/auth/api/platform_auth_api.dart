@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/platform/auth/api/platform_login_models.dart';
-import 'package:fitcore_client/features/platform/auth/api/platform_verify_models.dart';
+import 'package:fitcore_client/features/platform/auth/models/platform_login_models.dart';
+import 'package:fitcore_client/features/platform/auth/models/platform_verify_models.dart';
 
 class PlatformAuthApi {
   PlatformAuthApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

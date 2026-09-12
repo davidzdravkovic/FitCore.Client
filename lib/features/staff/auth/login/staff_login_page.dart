@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/core/auth/portal_auth_models.dart';
+import 'package:fitcore_client/features/staff/auth/models/staff_auth_models.dart';
+import 'package:fitcore_client/core/routing/staff_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/password_login_form.dart';
 import 'package:fitcore_client/features/staff/auth/api/staff_auth_api.dart';
 import 'package:fitcore_client/features/staff/auth/staff_session.dart';
@@ -18,7 +19,7 @@ class StaffLoginPage extends StatelessWidget {
       emailHint: 'coach@gym.com',
       onSubmit: (email, password) async {
         final response = await api.login(
-          EmailPasswordLoginRequest(email: email, password: password),
+          LoginStaffRequest(email: email, password: password),
         );
 
         if (!context.mounted) return;
@@ -28,7 +29,7 @@ class StaffLoginPage extends StatelessWidget {
           organizationName: response.organizationName,
           firstName: response.firstName,
         );
-        context.go('/staff');
+        context.go(StaffPaths.home);
       },
     );
   }

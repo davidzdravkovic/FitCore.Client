@@ -1,3 +1,4 @@
+import 'package:fitcore_client/core/routing/tenant_paths.dart';
 import 'package:flutter/material.dart';
 
 enum DashboardSection {
@@ -11,28 +12,30 @@ enum DashboardSection {
   settings;
 
   String get location => switch (this) {
-        DashboardSection.overview => '/tenant',
-        DashboardSection.members => '/tenant/members',
-        DashboardSection.memberships => '/tenant/memberships',
-        DashboardSection.schedule => '/tenant/schedule',
-        DashboardSection.checkIns => '/tenant/check-ins',
-        DashboardSection.staff => '/tenant/staff',
-        DashboardSection.billing => '/tenant/billing',
-        DashboardSection.settings => '/tenant/settings',
+        DashboardSection.overview => TenantPaths.home,
+        DashboardSection.members => TenantPaths.members,
+        DashboardSection.memberships => TenantPaths.memberships,
+        DashboardSection.schedule => TenantPaths.schedule,
+        DashboardSection.checkIns => TenantPaths.checkIns,
+        DashboardSection.staff => TenantPaths.staff,
+        DashboardSection.billing => TenantPaths.billing,
+        DashboardSection.settings => TenantPaths.settings,
       };
 
   static DashboardSection fromLocation(String path) {
-    // Longer prefixes first so /tenant/memberships ≠ /tenant/members.
-    if (path == '/tenant' || path == '/tenant/') return DashboardSection.overview;
-    if (path.startsWith('/tenant/memberships')) {
+    // Longer prefixes first so memberships ≠ members.
+    if (path == TenantPaths.home || path == '${TenantPaths.home}/') {
+      return DashboardSection.overview;
+    }
+    if (path.startsWith(TenantPaths.memberships)) {
       return DashboardSection.memberships;
     }
-    if (path.startsWith('/tenant/members')) return DashboardSection.members;
-    if (path.startsWith('/tenant/schedule')) return DashboardSection.schedule;
-    if (path.startsWith('/tenant/check-ins')) return DashboardSection.checkIns;
-    if (path.startsWith('/tenant/staff')) return DashboardSection.staff;
-    if (path.startsWith('/tenant/billing')) return DashboardSection.billing;
-    if (path.startsWith('/tenant/settings')) return DashboardSection.settings;
+    if (path.startsWith(TenantPaths.members)) return DashboardSection.members;
+    if (path.startsWith(TenantPaths.schedule)) return DashboardSection.schedule;
+    if (path.startsWith(TenantPaths.checkIns)) return DashboardSection.checkIns;
+    if (path.startsWith(TenantPaths.staff)) return DashboardSection.staff;
+    if (path.startsWith(TenantPaths.billing)) return DashboardSection.billing;
+    if (path.startsWith(TenantPaths.settings)) return DashboardSection.settings;
     return DashboardSection.overview;
   }
 }

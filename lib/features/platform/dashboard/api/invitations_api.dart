@@ -1,5 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/platform/dashboard/api/invitations_models.dart';
+import 'package:fitcore_client/features/platform/dashboard/models/invitations_models.dart';
 
 class InvitationsApi {
   InvitationsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

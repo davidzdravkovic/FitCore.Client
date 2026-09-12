@@ -22,8 +22,8 @@ enum MemberStatus {
   }
 }
 
-class Member {
-  const Member({
+class MemberResponse {
+  const MemberResponse({
     required this.id,
     required this.firstName,
     required this.lastName,
@@ -41,9 +41,9 @@ class Member {
   final MemberStatus status;
   final DateTime createdAt;
 
-  factory Member.fromJson(dynamic json) {
+  factory MemberResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
-    return Member(
+    return MemberResponse(
       id: map['id'] as String? ?? '',
       firstName: map['firstName'] as String? ?? '',
       lastName: map['lastName'] as String? ?? '',
@@ -78,4 +78,17 @@ class CreateMemberRequest {
         'phone': phone,
         'status': status.apiValue,
       };
+}
+
+class InviteMemberResponse {
+  const InviteMemberResponse({required this.message});
+
+  final String message;
+
+  factory InviteMemberResponse.fromJson(dynamic json) {
+    final map = json as Map<String, dynamic>? ?? {};
+    return InviteMemberResponse(
+      message: map['message'] as String? ?? '',
+    );
+  }
 }

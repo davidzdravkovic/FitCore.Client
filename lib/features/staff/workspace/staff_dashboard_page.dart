@@ -1,4 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
+import 'package:fitcore_client/core/routing/staff_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/portal_placeholder_dashboard.dart';
 import 'package:fitcore_client/features/staff/auth/staff_session.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ class StaffDashboardPage extends StatelessWidget {
       onSignOut: () {
         ApiClient.instance.setAccessToken(null);
         StaffSession.clear();
-        context.go('/staff/login');
+        context.go(StaffPaths.login);
       },
     );
   }

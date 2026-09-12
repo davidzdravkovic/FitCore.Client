@@ -1,5 +1,5 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
-import 'package:fitcore_client/features/tenant/staff/api/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
 import 'package:fitcore_client/features/tenant/staff/staff_controller.dart';
 import 'package:fitcore_client/features/tenant/staff/widgets/staff_form.dart';
 import 'package:flutter/material.dart';
@@ -71,7 +71,7 @@ class _StaffPanelState extends State<StaffPanel> {
     }
   }
 
-  Future<void> _inviteStaff(Staff person) async {
+  Future<void> _inviteStaff(StaffResponse person) async {
     final error = await _controller.invite(person);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -83,7 +83,7 @@ class _StaffPanelState extends State<StaffPanel> {
     );
   }
 
-  Future<void> _deleteStaff(Staff person) async {
+  Future<void> _deleteStaff(StaffResponse person) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
