@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:fitcore_client/core/api/api_config.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
+import 'package:fitcore_client/core/api/dio_exception_mapper.dart';
 import 'package:fitcore_client/core/auth/auth_refresh.dart';
 
 typedef JsonParser<T> = T Function(dynamic json);
@@ -66,34 +67,10 @@ class ApiClient {
         throw ApiException('Session expired', statusCode: status);
       }
 
-      throw ApiException(
-        _messageFrom(e.response?.data) ?? e.message ?? 'Request failed',
-        statusCode: status,
-      );
+      throw DioExceptionMapper.toApiException(e);
     } catch (e) {
+      if (e is ApiException) rethrow;
       throw ApiException('Invalid response from server');
     }
-  }
-
-  String? _messageFrom(dynamic data) {
-    if (data is! Map) return null;
-
-    final message = data['message'] ?? data['title'];
-    if (message is String && message.isNotEmpty) return message;
-
-    final errors = data['errors'];
-    if (errors is Map) {
-      final parts = <String>[];
-      for (final value in errors.values) {
-        if (value is List) {
-          parts.addAll(value.map((e) => '$e'));
-        } else if (value != null) {
-          parts.add('$value');
-        }
-      }
-      if (parts.isNotEmpty) return parts.join(' ');
-    }
-
-    return null;
   }
 }
