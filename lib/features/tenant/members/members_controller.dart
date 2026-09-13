@@ -9,28 +9,36 @@ class MembersController extends ChangeNotifier {
       : _membersApi = membersApi ?? MembersApi();
 
   final MembersApi _membersApi;
+  int _epoch = 0;
+
 
   MembersApi get membersApi => _membersApi;
 
   List<MemberResponse> members = const [];
   bool isLoading = false;
+
   String? error;
 
-  Future<void> load() async {
-    isLoading = true;
-    error = null;
-    notifyListeners();
+ Future<void> load() async {
+  final gen = ++_epoch;
+  isLoading = true;
+  error = null;
+  notifyListeners();
 
-    try {
-      members = await _membersApi.list();
-      error = null;
-    } on ApiException catch (e) {
-      error = e.message;
-    } finally {
+  try {
+    final list = await _membersApi.list();
+    if (gen != _epoch) return;
+    members = list;
+  } on ApiException catch (e) {
+    if (gen != _epoch) return;
+    error = e.message;
+  } finally {
+    if (gen == _epoch) {
       isLoading = false;
       notifyListeners();
     }
   }
+}
 
   Future<String?> invite(MemberResponse member) async {
     try {
