@@ -6,6 +6,7 @@ class RegisterOrganizationRequest {
     required this.country,
     required this.city,
     required this.timeZone,
+    required this.currency,
     required this.ownerFirstName,
     required this.ownerLastName,
     required this.ownerEmail,
@@ -18,6 +19,7 @@ class RegisterOrganizationRequest {
   final String country;
   final String city;
   final String timeZone;
+  final String currency;
   final String ownerFirstName;
   final String ownerLastName;
   final String ownerEmail;
@@ -30,6 +32,7 @@ class RegisterOrganizationRequest {
         'country': country,
         'city': city,
         'timeZone': timeZone,
+        'currency': currency,
         'ownerFirstName': ownerFirstName,
         'ownerLastName': ownerLastName,
         'ownerEmail': ownerEmail,

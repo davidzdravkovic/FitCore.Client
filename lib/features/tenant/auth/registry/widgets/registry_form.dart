@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
+import 'package:fitcore_client/core/money/currencies.dart';
 import 'package:fitcore_client/core/routing/tenant_paths.dart';
 import 'package:fitcore_client/core/time/time_zones.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
@@ -28,12 +29,14 @@ class _RegistryFormState extends State<RegistryForm> {
   final _countryController = TextEditingController();
   final _cityController = TextEditingController();
   final _timeZoneController = TextEditingController();
+  final _currencyController = TextEditingController();
   final _ownerFirstNameController = TextEditingController();
   final _ownerLastNameController = TextEditingController();
   final _ownerEmailController = TextEditingController();
   final _ownerPasswordController = TextEditingController();
 
   final _timeZoneFocusNode = FocusNode();
+  final _currencyFocusNode = FocusNode();
 
   bool _obscurePassword = true;
   bool _isSubmitting = false;
@@ -62,6 +65,8 @@ class _RegistryFormState extends State<RegistryForm> {
     _cityController.dispose();
     _timeZoneController.dispose();
     _timeZoneFocusNode.dispose();
+    _currencyController.dispose();
+    _currencyFocusNode.dispose();
     _ownerFirstNameController.dispose();
     _ownerLastNameController.dispose();
     _ownerEmailController.dispose();
@@ -92,6 +97,7 @@ class _RegistryFormState extends State<RegistryForm> {
           country: _countryController.text.trim(),
           city: _cityController.text.trim(),
           timeZone: _timeZoneController.text.trim(),
+          currency: _currencyController.text.trim().toUpperCase(),
           ownerFirstName: _ownerFirstNameController.text.trim(),
           ownerLastName: _ownerLastNameController.text.trim(),
           ownerEmail: _ownerEmailController.text.trim(),
@@ -212,6 +218,70 @@ class _RegistryFormState extends State<RegistryForm> {
                   if (text.isEmpty) return 'Time zone is required';
                   if (!TimeZones.contains(text)) {
                     return 'Select a time zone from the list';
+                  }
+                  return null;
+                },
+                onFieldSubmitted: (_) => onFieldSubmitted(),
+              );
+            },
+            optionsViewBuilder: (context, onSelected, options) {
+              return Align(
+                alignment: Alignment.topLeft,
+                child: Material(
+                  elevation: 4,
+                  borderRadius: BorderRadius.circular(8),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 280,
+                      maxWidth: 460,
+                    ),
+                    child: ListView.builder(
+                      padding: EdgeInsets.zero,
+                      shrinkWrap: true,
+                      itemCount: options.length,
+                      itemBuilder: (context, index) {
+                        final option = options.elementAt(index);
+                        return ListTile(
+                          dense: true,
+                          title: Text(option),
+                          onTap: () => onSelected(option),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 14),
+          RawAutocomplete<String>(
+            textEditingController: _currencyController,
+            focusNode: _currencyFocusNode,
+            optionsBuilder: (textEditingValue) {
+              final query = textEditingValue.text.trim().toUpperCase();
+              if (query.isEmpty) return Currencies.all;
+              return Currencies.all.where((code) => code.contains(query));
+            },
+            onSelected: (selected) {
+              _currencyController.text = selected;
+            },
+            fieldViewBuilder:
+                (context, controller, focusNode, onFieldSubmitted) {
+              return TextFormField(
+                controller: controller,
+                focusNode: focusNode,
+                textCapitalization: TextCapitalization.characters,
+                textInputAction: TextInputAction.next,
+                decoration: registryInputDecoration(
+                  label: 'Currency',
+                  hint: 'ISO code, e.g. EUR',
+                  suffixIcon: const Icon(Icons.arrow_drop_down),
+                ),
+                validator: (value) {
+                  final text = value?.trim().toUpperCase() ?? '';
+                  if (text.isEmpty) return 'Currency is required';
+                  if (!Currencies.contains(text)) {
+                    return 'Select a currency from the list';
                   }
                   return null;
                 },

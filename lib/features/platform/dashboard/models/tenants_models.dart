@@ -6,6 +6,7 @@ class TenantResponse {
     required this.country,
     required this.city,
     required this.timeZone,
+    required this.currency,
     required this.status,
     required this.createdAt,
   });
@@ -16,6 +17,7 @@ class TenantResponse {
   final String country;
   final String city;
   final String timeZone;
+  final String currency;
   final String status;
   final DateTime createdAt;
 
@@ -30,6 +32,7 @@ class TenantResponse {
       country: map['country'] as String? ?? '',
       city: map['city'] as String? ?? '',
       timeZone: map['timeZone'] as String? ?? '',
+      currency: map['currency'] as String? ?? '',
       status: map['status'] as String? ?? '',
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),

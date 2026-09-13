@@ -286,6 +286,7 @@ class _PlatformDashboardPageState extends State<PlatformDashboardPage> {
         columns: const [
           DataColumn(label: Text('Name')),
           DataColumn(label: Text('Email')),
+          DataColumn(label: Text('Currency')),
           DataColumn(label: Text('Status')),
           DataColumn(label: Text('')),
         ],
@@ -295,6 +296,7 @@ class _PlatformDashboardPageState extends State<PlatformDashboardPage> {
               cells: [
                 DataCell(Text(tenant.name)),
                 DataCell(Text(tenant.businessEmail)),
+                DataCell(Text(tenant.currency.isEmpty ? '—' : tenant.currency)),
                 DataCell(Text(tenant.status)),
                 DataCell(
                   tenant.isCancelled
