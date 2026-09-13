@@ -12,6 +12,9 @@
 .swiftpm/
 migrate_working_dir/
 
+# Agent
+ AGENT.md
+
 # IntelliJ related
 *.iml
 *.ipr
@@ -46,3 +49,7 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Agent / Cursor local rails (not committed)
+AGENTS.md
+.cursor/
