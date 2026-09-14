@@ -6,6 +6,9 @@ import 'package:fitcore_client/features/tenant/dashboard/tenant_dashboard_page.d
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_placeholder_panel.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/overview/overview_page.dart';
 import 'package:fitcore_client/features/tenant/members/widgets/members_panel.dart';
+import 'package:fitcore_client/features/tenant/memberships/widgets/memberships_panel.dart';
+import 'package:fitcore_client/features/tenant/plans/widgets/plans_panel.dart';
+import 'package:fitcore_client/features/tenant/services/widgets/services_panel.dart';
 import 'package:fitcore_client/features/tenant/staff/widgets/staff_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -41,13 +44,16 @@ final List<RouteBase> tenantRoutes = [
         builder: (context, state) => const MembersPanel(),
       ),
       GoRoute(
+        path: TenantPaths.services,
+        builder: (context, state) => const ServicesPanel(),
+      ),
+      GoRoute(
+        path: TenantPaths.plans,
+        builder: (context, state) => const PlansPanel(),
+      ),
+      GoRoute(
         path: TenantPaths.memberships,
-        builder: (context, state) => const DashboardPlaceholderPanel(
-          title: 'Memberships',
-          description:
-              'Plans, renewals, and freezes will be managed from this section.',
-          icon: Icons.card_membership_outlined,
-        ),
+        builder: (context, state) => const MembershipsPanel(),
       ),
       GoRoute(
         path: TenantPaths.schedule,

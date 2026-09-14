@@ -5,6 +5,8 @@ abstract final class TenantPaths {
   static const registry = '/tenant/registry';
   static const home = '/tenant';
   static const members = '/tenant/members';
+  static const services = '/tenant/services';
+  static const plans = '/tenant/plans';
   static const memberships = '/tenant/memberships';
   static const schedule = '/tenant/schedule';
   static const checkIns = '/tenant/check-ins';

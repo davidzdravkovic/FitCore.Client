@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 enum DashboardSection {
   overview,
   members,
+  services,
+  plans,
   memberships,
   schedule,
   checkIns,
@@ -14,6 +16,8 @@ enum DashboardSection {
   String get location => switch (this) {
         DashboardSection.overview => TenantPaths.home,
         DashboardSection.members => TenantPaths.members,
+        DashboardSection.services => TenantPaths.services,
+        DashboardSection.plans => TenantPaths.plans,
         DashboardSection.memberships => TenantPaths.memberships,
         DashboardSection.schedule => TenantPaths.schedule,
         DashboardSection.checkIns => TenantPaths.checkIns,
@@ -31,6 +35,8 @@ enum DashboardSection {
       return DashboardSection.memberships;
     }
     if (path.startsWith(TenantPaths.members)) return DashboardSection.members;
+    if (path.startsWith(TenantPaths.services)) return DashboardSection.services;
+    if (path.startsWith(TenantPaths.plans)) return DashboardSection.plans;
     if (path.startsWith(TenantPaths.schedule)) return DashboardSection.schedule;
     if (path.startsWith(TenantPaths.checkIns)) return DashboardSection.checkIns;
     if (path.startsWith(TenantPaths.staff)) return DashboardSection.staff;
@@ -62,6 +68,16 @@ const List<DashboardNavItem> dashboardNavItems = [
     section: DashboardSection.members,
     label: 'Members',
     icon: Icons.people_outline,
+  ),
+  DashboardNavItem(
+    section: DashboardSection.services,
+    label: 'Services',
+    icon: Icons.fitness_center_outlined,
+  ),
+  DashboardNavItem(
+    section: DashboardSection.plans,
+    label: 'Plans',
+    icon: Icons.sell_outlined,
   ),
   DashboardNavItem(
     section: DashboardSection.memberships,

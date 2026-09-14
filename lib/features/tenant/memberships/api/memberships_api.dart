@@ -1,0 +1,27 @@
+import 'package:fitcore_client/core/api/api_client.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
+
+class MembershipsApi {
+  MembershipsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;
+
+  final ApiClient _client;
+
+  Future<List<MembershipResponse>> list() {
+    return _client.request<List<MembershipResponse>>(
+      '/api/memberships',
+      parse: (json) {
+        final items = json as List<dynamic>? ?? const [];
+        return items.map(MembershipResponse.fromJson).toList();
+      },
+    );
+  }
+
+  Future<MembershipResponse> assign(AssignMembershipRequest request) {
+    return _client.request<MembershipResponse>(
+      '/api/memberships',
+      method: 'POST',
+      data: request.toJson(),
+      parse: MembershipResponse.fromJson,
+    );
+  }
+}

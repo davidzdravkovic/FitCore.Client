@@ -1,5 +1,5 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
-import 'package:fitcore_client/features/tenant/dashboard/models/dashboard_nav_item.dart';
+import 'package:fitcore_client/features/tenant/dashboard/navigation/dashboard_nav_item.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_sidebar.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_top_bar.dart';
 import 'package:flutter/material.dart';
