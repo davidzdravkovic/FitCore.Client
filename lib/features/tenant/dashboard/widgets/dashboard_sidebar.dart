@@ -1,4 +1,4 @@
-import 'package:fitcore_client/features/tenant/dashboard/models/dashboard_nav_item.dart';
+import 'package:fitcore_client/features/tenant/dashboard/navigation/dashboard_nav_item.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
