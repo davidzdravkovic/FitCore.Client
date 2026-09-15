@@ -1,3 +1,18 @@
+enum MembershipCancelReason {
+  memberRequest,
+  adminDecision;
+
+  String get apiValue => switch (this) {
+        MembershipCancelReason.memberRequest => 'MemberRequest',
+        MembershipCancelReason.adminDecision => 'AdminDecision',
+      };
+
+  String get label => switch (this) {
+        MembershipCancelReason.memberRequest => 'Member requested',
+        MembershipCancelReason.adminDecision => 'Admin decision',
+      };
+}
+
 class MembershipResponse {
   const MembershipResponse({
     required this.id,
@@ -10,6 +25,9 @@ class MembershipResponse {
     required this.createdAt,
     this.endAt,
     this.sessionsRemaining,
+    this.cancelReason,
+    this.cancelNote,
+    this.cancelledAt,
   });
 
   final String id;
@@ -22,6 +40,14 @@ class MembershipResponse {
   final DateTime? endAt;
   final int? sessionsRemaining;
   final DateTime createdAt;
+  final String? cancelReason;
+  final String? cancelNote;
+  final DateTime? cancelledAt;
+
+  bool get isCancellable {
+    final normalized = status.trim().toLowerCase();
+    return normalized == 'active' || normalized == 'frozen';
+  }
 
   factory MembershipResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
@@ -40,6 +66,11 @@ class MembershipResponse {
       sessionsRemaining: map['sessionsRemaining'] as int?,
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      cancelReason: map['cancelReason'] as String?,
+      cancelNote: map['cancelNote'] as String?,
+      cancelledAt: map['cancelledAt'] == null
+          ? null
+          : DateTime.tryParse(map['cancelledAt'] as String? ?? ''),
     );
   }
 }
@@ -59,5 +90,20 @@ class AssignMembershipRequest {
         'memberId': memberId,
         'planId': planId,
         if (startAt != null) 'startAt': startAt!.toUtc().toIso8601String(),
+      };
+}
+
+class CancelMembershipRequest {
+  const CancelMembershipRequest({
+    required this.reason,
+    this.note = '',
+  });
+
+  final MembershipCancelReason reason;
+  final String note;
+
+  Map<String, dynamic> toJson() => {
+        'reason': reason.apiValue,
+        if (note.trim().isNotEmpty) 'note': note.trim(),
       };
 }

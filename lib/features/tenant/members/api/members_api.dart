@@ -25,6 +25,15 @@ class MembersApi {
     );
   }
 
+  Future<MemberResponse> importMember(CreateMemberRequest request) {
+    return _client.request<MemberResponse>(
+      '/api/members/import',
+      method: 'POST',
+      data: request.toJson(),
+      parse: MemberResponse.fromJson,
+    );
+  }
+
   Future<InviteMemberResponse> invite(String id) {
     return _client.request<InviteMemberResponse>(
       '/api/members/$id/invite',

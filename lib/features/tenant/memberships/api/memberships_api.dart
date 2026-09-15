@@ -24,4 +24,13 @@ class MembershipsApi {
       parse: MembershipResponse.fromJson,
     );
   }
+
+  Future<MembershipResponse> cancel(String id, CancelMembershipRequest request) {
+    return _client.request<MembershipResponse>(
+      '/api/memberships/$id/cancel',
+      method: 'POST',
+      data: request.toJson(),
+      parse: MembershipResponse.fromJson,
+    );
+  }
 }

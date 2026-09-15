@@ -1,22 +1,31 @@
 enum MemberStatus {
   lead,
-  active;
-
-  String get apiValue => switch (this) {
-        MemberStatus.lead => 'Lead',
-        MemberStatus.active => 'Active',
-      };
+  trial,
+  active,
+  paused,
+  cancelled;
 
   String get label => switch (this) {
         MemberStatus.lead => 'Lead',
+        MemberStatus.trial => 'Trial',
         MemberStatus.active => 'Active',
+        MemberStatus.paused => 'Paused',
+        MemberStatus.cancelled => 'Cancelled',
       };
+
+  bool get canAssignMembership =>
+      this == MemberStatus.lead ||
+      this == MemberStatus.active ||
+      this == MemberStatus.paused;
 
   static MemberStatus? tryParse(String? value) {
     final normalized = value?.trim().toLowerCase();
     return switch (normalized) {
       'lead' => MemberStatus.lead,
+      'trial' => MemberStatus.trial,
       'active' => MemberStatus.active,
+      'paused' => MemberStatus.paused,
+      'cancelled' => MemberStatus.cancelled,
       _ => null,
     };
   }
@@ -49,7 +58,7 @@ class MemberResponse {
       lastName: map['lastName'] as String? ?? '',
       email: map['email'] as String?,
       phone: map['phone'] as String?,
-      status: MemberStatus.tryParse(map['status'] as String?) ?? MemberStatus.active,
+      status: MemberStatus.tryParse(map['status'] as String?) ?? MemberStatus.lead,
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
     );
@@ -60,14 +69,12 @@ class CreateMemberRequest {
   const CreateMemberRequest({
     required this.firstName,
     required this.lastName,
-    required this.status,
     this.email = '',
     this.phone = '',
   });
 
   final String firstName;
   final String lastName;
-  final MemberStatus status;
   final String email;
   final String phone;
 
@@ -76,7 +83,6 @@ class CreateMemberRequest {
         'lastName': lastName,
         'email': email,
         'phone': phone,
-        'status': status.apiValue,
       };
 }
 

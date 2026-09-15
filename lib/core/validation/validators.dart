@@ -35,7 +35,13 @@ class Validators {
     final phone = value?.trim() ?? '';
     if (phone.isEmpty) return null;
 
-    if (phone.length < 7) {
+    // Digits with optional +, spaces, dashes, parentheses — not emails/text.
+    if (!RegExp(r'^\+?[\d\s\-().]+$').hasMatch(phone)) {
+      return 'Enter a valid phone number';
+    }
+
+    final digits = phone.replaceAll(RegExp(r'\D'), '');
+    if (digits.length < 7 || digits.length > 15) {
       return 'Enter a valid phone number';
     }
 

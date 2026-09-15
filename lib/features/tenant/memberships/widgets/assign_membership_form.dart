@@ -28,6 +28,9 @@ class _AssignMembershipFormState extends State<AssignMembershipForm> {
   late final MembershipsApi _membershipsApi =
       widget.membershipsApi ?? MembershipsApi();
 
+  late final List<MemberResponse> _assignableMembers;
+  late final List<PlanResponse> _activePlans;
+
   String? _memberId;
   String? _planId;
   DateTime? _startAt;
@@ -36,11 +39,16 @@ class _AssignMembershipFormState extends State<AssignMembershipForm> {
   @override
   void initState() {
     super.initState();
-    if (widget.members.isNotEmpty) {
-      _memberId = widget.members.first.id;
+    _assignableMembers = widget.members
+        .where((m) => m.status.canAssignMembership)
+        .toList();
+    _activePlans = widget.activePlans;
+
+    if (_assignableMembers.isNotEmpty) {
+      _memberId = _assignableMembers.first.id;
     }
-    if (widget.activePlans.isNotEmpty) {
-      _planId = widget.activePlans.first.id;
+    if (_activePlans.isNotEmpty) {
+      _planId = _activePlans.first.id;
     }
   }
 
@@ -89,10 +97,10 @@ class _AssignMembershipFormState extends State<AssignMembershipForm> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    if (widget.members.isEmpty || widget.activePlans.isEmpty) {
+    if (_assignableMembers.isEmpty || _activePlans.isEmpty) {
       return Text(
-        widget.members.isEmpty
-            ? 'Add a member first, then assign a membership.'
+        _assignableMembers.isEmpty
+            ? 'Add a Lead, Active, or Paused member first, then assign a membership.'
             : 'Create an active plan first, then assign a membership.',
         style: theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
@@ -117,7 +125,7 @@ class _AssignMembershipFormState extends State<AssignMembershipForm> {
             enableSearch: true,
             requestFocusOnTap: true,
             dropdownMenuEntries: [
-              for (final member in widget.members)
+              for (final member in _assignableMembers)
                 DropdownMenuEntry(
                   value: member.id,
                   label: '${member.firstName} ${member.lastName}'.trim(),
@@ -138,7 +146,7 @@ class _AssignMembershipFormState extends State<AssignMembershipForm> {
             enableSearch: true,
             requestFocusOnTap: true,
             dropdownMenuEntries: [
-              for (final plan in widget.activePlans)
+              for (final plan in _activePlans)
                 DropdownMenuEntry(
                   value: plan.id,
                   label: '${plan.name} · ${plan.entitlementSummary}',

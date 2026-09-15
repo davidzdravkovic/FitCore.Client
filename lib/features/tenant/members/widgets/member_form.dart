@@ -9,10 +9,12 @@ class MemberForm extends StatefulWidget {
     super.key,
     this.membersApi,
     this.onCreated,
+    this.isImport = false,
   });
 
   final MembersApi? membersApi;
   final ValueChanged<MemberResponse>? onCreated;
+  final bool isImport;
 
   @override
   State<MemberForm> createState() => _MemberFormState();
@@ -27,7 +29,6 @@ class _MemberFormState extends State<MemberForm> {
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
 
-  MemberStatus _status = MemberStatus.active;
   bool _isSubmitting = false;
 
   @override
@@ -44,16 +45,17 @@ class _MemberFormState extends State<MemberForm> {
 
     setState(() => _isSubmitting = true);
 
+    final request = CreateMemberRequest(
+      firstName: _firstNameController.text.trim(),
+      lastName: _lastNameController.text.trim(),
+      email: _emailController.text.trim(),
+      phone: _phoneController.text.trim(),
+    );
+
     try {
-      final response = await _membersApi.create(
-        CreateMemberRequest(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          email: _emailController.text.trim(),
-          phone: _phoneController.text.trim(),
-          status: _status,
-        ),
-      );
+      final response = widget.isImport
+          ? await _membersApi.importMember(request)
+          : await _membersApi.create(request);
 
       if (!mounted) return;
 
@@ -73,6 +75,15 @@ class _MemberFormState extends State<MemberForm> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final helpText = widget.isImport
+        ? 'Brings in a member from another system as Paused. '
+            'They become Active when you assign a membership.'
+        : 'Creates a new lead with no past history. '
+            'They become Active when you assign a membership. '
+            'Use Import for members from another system.';
+
+    final submitLabel = widget.isImport ? 'Import member' : 'Create member';
+
     return Form(
       key: _formKey,
       child: Column(
@@ -80,33 +91,11 @@ class _MemberFormState extends State<MemberForm> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            'Creates a new member with no past history. '
-            'Use Import to bring members from another system.',
+            helpText,
             style: theme.textTheme.bodySmall?.copyWith(
               color: colorScheme.onSurfaceVariant,
               height: 1.4,
             ),
-          ),
-          const SizedBox(height: 16),
-          DropdownMenu<MemberStatus>(
-            initialSelection: _status,
-            label: const Text('Status'),
-            expandedInsets: EdgeInsets.zero,
-            enableSearch: false,
-            requestFocusOnTap: false,
-            dropdownMenuEntries: [
-              for (final status in MemberStatus.values)
-                DropdownMenuEntry(
-                  value: status,
-                  label: status.label,
-                ),
-            ],
-            onSelected: _isSubmitting
-                ? null
-                : (value) {
-                    if (value == null) return;
-                    setState(() => _status = value);
-                  },
           ),
           const SizedBox(height: 16),
           TextFormField(
@@ -189,7 +178,7 @@ class _MemberFormState extends State<MemberForm> {
                     width: 22,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('Create member'),
+                : Text(submitLabel),
           ),
         ],
       ),

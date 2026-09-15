@@ -58,4 +58,17 @@ class MembershipsController extends ChangeNotifier {
       }
     }
   }
+
+  Future<String?> cancel(
+    MembershipResponse membership,
+    CancelMembershipRequest request,
+  ) async {
+    try {
+      await _membershipsApi.cancel(membership.id, request);
+      await load();
+      return null;
+    } on ApiException catch (e) {
+      return e.message;
+    }
+  }
 }

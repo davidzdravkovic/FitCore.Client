@@ -5,6 +5,7 @@ import 'package:fitcore_client/core/api/api_exception.dart';
 abstract final class DioExceptionMapper {
   static ApiException toApiException(DioException exception) {
     final status = exception.response?.statusCode;
+    final data = exception.response?.data;
 
     switch (exception.type) {
       case DioExceptionType.connectionTimeout:
@@ -32,8 +33,9 @@ abstract final class DioExceptionMapper {
         );
       case DioExceptionType.badResponse:
         return ApiException(
-          messageFromBody(exception.response?.data) ?? 'Request failed',
+          messageFromBody(data) ?? 'Request failed',
           statusCode: status,
+          memberships: membershipsFromBody(data),
         );
       case DioExceptionType.unknown:
         if (exception.response == null) {
@@ -43,8 +45,9 @@ abstract final class DioExceptionMapper {
           );
         }
         return ApiException(
-          messageFromBody(exception.response?.data) ?? 'Request failed',
+          messageFromBody(data) ?? 'Request failed',
           statusCode: status,
+          memberships: membershipsFromBody(data),
         );
     }
   }
@@ -69,5 +72,12 @@ abstract final class DioExceptionMapper {
     }
 
     return null;
+  }
+
+  static List<UnresolvedMembershipInfo> membershipsFromBody(dynamic data) {
+    if (data is! Map) return const [];
+    final items = data['memberships'];
+    if (items is! List) return const [];
+    return items.map(UnresolvedMembershipInfo.fromJson).toList();
   }
 }

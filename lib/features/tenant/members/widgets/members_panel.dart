@@ -71,6 +71,46 @@ class _MembersPanelState extends State<MembersPanel> {
     }
   }
 
+  Future<void> _openImportMemberForm() async {
+    final imported = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Import member'),
+          content: SizedBox(
+            width: 420,
+            child: SingleChildScrollView(
+              child: MemberForm(
+                isImport: true,
+                membersApi: _controller.membersApi,
+                onCreated: (member) {
+                  Navigator.of(dialogContext).pop(true);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${member.firstName} ${member.lastName} imported',
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (imported == true) {
+      await _controller.load();
+    }
+  }
+
   Future<void> _inviteMember(MemberResponse member) async {
     final error = await _controller.invite(member);
     if (!mounted) return;
@@ -88,19 +128,19 @@ class _MembersPanelState extends State<MembersPanel> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete member'),
+          title: const Text('Cancel member'),
           content: Text(
-            'Remove ${member.firstName} ${member.lastName}? '
-            'They will no longer appear in the list.',
+            'Cancel ${member.firstName} ${member.lastName}? '
+            'They will be deleted an unseen by the gym.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancel'),
+              child: const Text('Keep'),
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('Delete'),
+              child: const Text('Cancel member'),
             ),
           ],
         );
@@ -111,20 +151,32 @@ class _MembersPanelState extends State<MembersPanel> {
 
     final error = await _controller.delete(member);
     if (!mounted) return;
+
+    if (error != null) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return AlertDialog(
+            title: const Text('Cannot cancel member'),
+            content: SingleChildScrollView(
+              child: Text(error),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          error ?? '${member.firstName} ${member.lastName} deleted',
-        ),
-      ),
-    );
-  }
-
-  void _showImportComingSoon() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Import is for bringing members (and history) from another system. Coming soon.',
+          '${member.firstName} ${member.lastName} cancelled',
         ),
       ),
     );
@@ -191,7 +243,7 @@ class _MembersPanelState extends State<MembersPanel> {
                           width: menuWidth,
                           child: MenuItemButton(
                             leadingIcon: const Icon(Icons.upload_file_outlined),
-                            onPressed: _showImportComingSoon,
+                            onPressed: _openImportMemberForm,
                             child: const Text('Import members'),
                           ),
                         ),
@@ -279,9 +331,9 @@ class _MembersPanelState extends State<MembersPanel> {
                           icon: const Icon(Icons.outgoing_mail),
                         ),
                         IconButton(
-                          tooltip: 'Delete',
+                          tooltip: 'Cancel member',
                           onPressed: () => _deleteMember(member),
-                          icon: const Icon(Icons.delete_outline),
+                          icon: const Icon(Icons.person_off_outlined),
                         ),
                       ],
                     ),

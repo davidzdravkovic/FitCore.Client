@@ -73,6 +73,97 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
     }
   }
 
+  Future<void> _cancelMembership(MembershipResponse membership) async {
+    var reason = MembershipCancelReason.memberRequest;
+    final noteController = TextEditingController();
+
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Cancel membership'),
+                content: SizedBox(
+                  width: 420,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Cancel ${membership.planName} for ${membership.memberName}? '
+                        'This ends the entitlement. No refund is processed in the app.',
+                      ),
+                      const SizedBox(height: 16),
+                      DropdownMenu<MembershipCancelReason>(
+                        initialSelection: reason,
+                        label: const Text('Reason'),
+                        expandedInsets: EdgeInsets.zero,
+                        dropdownMenuEntries: [
+                          for (final value in MembershipCancelReason.values)
+                            DropdownMenuEntry(
+                              value: value,
+                              label: value.label,
+                            ),
+                        ],
+                        onSelected: (value) {
+                          if (value == null) return;
+                          setDialogState(() => reason = value);
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: noteController,
+                        maxLength: 500,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Note (optional)',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    child: const Text('Keep'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    child: const Text('Cancel membership'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      final note = noteController.text;
+
+      if (confirmed != true) return;
+
+      final error = await _controller.cancel(
+        membership,
+        CancelMembershipRequest(reason: reason, note: note),
+      );
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            error ??
+                'Cancelled ${membership.planName} for ${membership.memberName}',
+          ),
+        ),
+      );
+    } finally {
+      noteController.dispose();
+    }
+  }
+
   String _formatDate(DateTime value) {
     final local = value.toLocal();
     final y = local.year.toString().padLeft(4, '0');
@@ -163,6 +254,7 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
             DataColumn(label: Text('Status')),
             DataColumn(label: Text('Start')),
             DataColumn(label: Text('Entitlement')),
+            DataColumn(label: Text('')),
           ],
           rows: [
             for (final membership in _controller.memberships)
@@ -173,6 +265,15 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
                   DataCell(Text(membership.status)),
                   DataCell(Text(_formatDate(membership.startAt))),
                   DataCell(Text(_entitlementCell(membership))),
+                  DataCell(
+                    membership.isCancellable
+                        ? IconButton(
+                            tooltip: 'Cancel membership',
+                            onPressed: () => _cancelMembership(membership),
+                            icon: const Icon(Icons.cancel_outlined),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
                 ],
               ),
           ],

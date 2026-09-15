@@ -55,7 +55,15 @@ class MembersController extends ChangeNotifier {
       await load();
       return null;
     } on ApiException catch (e) {
+      if (e.hasUnresolvedMemberships) {
+        return _formatUnresolvedMemberships(e);
+      }
       return e.message;
     }
+  }
+
+  static String _formatUnresolvedMemberships(ApiException e) {
+    final lines = e.memberships.map((m) => '• ${m.summary}').join('\n');
+    return '${e.message}\n$lines';
   }
 }
