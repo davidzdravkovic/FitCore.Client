@@ -29,10 +29,8 @@ class _PlanFormState extends State<PlanForm> {
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _sessionCountController = TextEditingController();
-  final _durationDaysController = TextEditingController();
 
   String? _serviceId;
-  PlanEntitlementType _entitlementType = PlanEntitlementType.sessionPack;
   bool _isSubmitting = false;
 
   @override
@@ -48,7 +46,6 @@ class _PlanFormState extends State<PlanForm> {
     _nameController.dispose();
     _priceController.dispose();
     _sessionCountController.dispose();
-    _durationDaysController.dispose();
     super.dispose();
   }
 
@@ -59,6 +56,9 @@ class _PlanFormState extends State<PlanForm> {
     final price = double.tryParse(_priceController.text.trim());
     if (price == null || price < 0) return;
 
+    final sessionCount = int.tryParse(_sessionCountController.text.trim());
+    if (sessionCount == null || sessionCount <= 0) return;
+
     setState(() => _isSubmitting = true);
 
     try {
@@ -67,13 +67,7 @@ class _PlanFormState extends State<PlanForm> {
           serviceId: _serviceId!,
           name: _nameController.text.trim(),
           price: price,
-          entitlementType: _entitlementType,
-          sessionCount: _entitlementType == PlanEntitlementType.sessionPack
-              ? int.tryParse(_sessionCountController.text.trim())
-              : null,
-          durationDays: _entitlementType == PlanEntitlementType.timePeriod
-              ? int.tryParse(_durationDaysController.text.trim())
-              : null,
+          sessionCount: sessionCount,
         ),
       );
 
@@ -164,67 +158,25 @@ class _PlanFormState extends State<PlanForm> {
             },
           ),
           const SizedBox(height: 16),
-          DropdownMenu<PlanEntitlementType>(
-            initialSelection: _entitlementType,
-            label: const Text('Entitlement'),
-            expandedInsets: EdgeInsets.zero,
-            enableSearch: false,
-            requestFocusOnTap: false,
-            dropdownMenuEntries: [
-              for (final type in PlanEntitlementType.values)
-                DropdownMenuEntry(
-                  value: type,
-                  label: type.label,
-                ),
-            ],
-            onSelected: _isSubmitting
-                ? null
-                : (value) {
-                    if (value == null) return;
-                    setState(() => _entitlementType = value);
-                  },
-          ),
-          const SizedBox(height: 16),
-          if (_entitlementType == PlanEntitlementType.sessionPack)
-            TextFormField(
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              controller: _sessionCountController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onFieldSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(
-                labelText: 'Session count',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                final n = int.tryParse(value?.trim() ?? '');
-                if (n == null || n <= 0) {
-                  return 'Enter a session count greater than 0';
-                }
-                return null;
-              },
-            )
-          else
-            TextFormField(
-              autovalidateMode: AutovalidateMode.onUserInteraction,
-              controller: _durationDaysController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              onFieldSubmitted: (_) => _submit(),
-              decoration: const InputDecoration(
-                labelText: 'Duration (days)',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                final n = int.tryParse(value?.trim() ?? '');
-                if (n == null || n <= 0) {
-                  return 'Enter duration days greater than 0';
-                }
-                return null;
-              },
+          TextFormField(
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            controller: _sessionCountController,
+            keyboardType: TextInputType.number,
+            textInputAction: TextInputAction.done,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            onFieldSubmitted: (_) => _submit(),
+            decoration: const InputDecoration(
+              labelText: 'Session count',
+              border: OutlineInputBorder(),
             ),
+            validator: (value) {
+              final n = int.tryParse(value?.trim() ?? '');
+              if (n == null || n <= 0) {
+                return 'Enter a session count greater than 0';
+              }
+              return null;
+            },
+          ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: _isSubmitting ? null : _submit,

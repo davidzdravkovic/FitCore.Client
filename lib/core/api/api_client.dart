@@ -3,6 +3,7 @@ import 'package:fitcore_client/core/api/api_config.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/api/dio_exception_mapper.dart';
 import 'package:fitcore_client/core/auth/auth_refresh.dart';
+import 'package:fitcore_client/core/auth/local_session_store.dart';
 
 typedef JsonParser<T> = T Function(dynamic json);
 
@@ -27,10 +28,13 @@ class ApiClient {
 
   String? get accessToken => _accessToken;
 
-  void setAccessToken(String? token) {
+  void setAccessToken(String? token, {bool persist = true}) {
     if (_accessToken == token) return;
     _accessToken = token;
     AuthRefresh.instance.notifyAuthChanged();
+    if (persist) {
+      LocalSessionStore.saveAccessToken(token);
+    }
   }
 
   Future<T> request<T>(

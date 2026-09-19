@@ -61,6 +61,7 @@ class _TenantLoginPageState extends State<TenantLoginPage> {
       TenantSession.set(
         organizationName: response.organizationName,
         ownerFirstName: response.ownerFirstName,
+        timeZone: response.timeZone,
       );
       context.go(TenantPaths.home);
     } on ApiException catch (e) {

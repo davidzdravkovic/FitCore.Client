@@ -21,16 +21,14 @@ class UnresolvedMembershipInfo {
     required this.planId,
     required this.planName,
     required this.status,
-    this.endAt,
-    this.sessionsRemaining,
+    this.sessionsAvailable,
   });
 
   final String id;
   final String planId;
   final String planName;
   final String status;
-  final DateTime? endAt;
-  final int? sessionsRemaining;
+  final int? sessionsAvailable;
 
   factory UnresolvedMembershipInfo.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
@@ -39,21 +37,14 @@ class UnresolvedMembershipInfo {
       planId: map['planId'] as String? ?? '',
       planName: map['planName'] as String? ?? '',
       status: map['status'] as String? ?? '',
-      endAt: DateTime.tryParse(map['endAt'] as String? ?? ''),
-      sessionsRemaining: map['sessionsRemaining'] as int?,
+      sessionsAvailable: map['sessionsAvailable'] as int?,
     );
   }
 
   String get summary {
     final parts = <String>[planName, status];
-    if (sessionsRemaining != null) {
-      parts.add('$sessionsRemaining sessions left');
-    } else if (endAt != null) {
-      final local = endAt!.toLocal();
-      final y = local.year.toString().padLeft(4, '0');
-      final m = local.month.toString().padLeft(2, '0');
-      final d = local.day.toString().padLeft(2, '0');
-      parts.add('ends $y-$m-$d');
+    if (sessionsAvailable != null) {
+      parts.add('$sessionsAvailable available');
     }
     return parts.join(' · ');
   }

@@ -124,6 +124,7 @@ class _RegistryFormState extends State<RegistryForm> {
       TenantSession.set(
         organizationName: response.organizationName,
         ownerFirstName: response.ownerFirstName,
+        timeZone: response.timeZone,
       );
       context.go(TenantPaths.home);
     } on ApiException catch (e) {

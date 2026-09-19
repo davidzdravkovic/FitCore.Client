@@ -173,13 +173,12 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
   }
 
   String _entitlementCell(MembershipResponse membership) {
-    if (membership.sessionsRemaining != null) {
-      return '${membership.sessionsRemaining} sessions left';
+    if (membership.sessionsAvailable >= 0) {
+      return '${membership.sessionsAvailable} available '
+          '(${membership.sessionsReserved} reserved, '
+          '${membership.sessionsBurned} burned / ${membership.sessionTotal})';
     }
-    if (membership.endAt != null) {
-      return 'Ends ${_formatDate(membership.endAt!)}';
-    }
-    return '—';
+    return 'No sessions';
   }
 
   @override

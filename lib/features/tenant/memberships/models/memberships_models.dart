@@ -22,9 +22,11 @@ class MembershipResponse {
     required this.planName,
     required this.status,
     required this.startAt,
+    required this.sessionTotal,
+    required this.sessionsReserved,
+    required this.sessionsBurned,
+    required this.sessionsAvailable,
     required this.createdAt,
-    this.endAt,
-    this.sessionsRemaining,
     this.cancelReason,
     this.cancelNote,
     this.cancelledAt,
@@ -37,8 +39,10 @@ class MembershipResponse {
   final String planName;
   final String status;
   final DateTime startAt;
-  final DateTime? endAt;
-  final int? sessionsRemaining;
+  final int sessionTotal;
+  final int sessionsReserved;
+  final int sessionsBurned;
+  final int sessionsAvailable;
   final DateTime createdAt;
   final String? cancelReason;
   final String? cancelNote;
@@ -60,10 +64,10 @@ class MembershipResponse {
       status: map['status'] as String? ?? '',
       startAt: DateTime.tryParse(map['startAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      endAt: map['endAt'] == null
-          ? null
-          : DateTime.tryParse(map['endAt'] as String? ?? ''),
-      sessionsRemaining: map['sessionsRemaining'] as int?,
+      sessionTotal: map['sessionTotal'] as int? ?? 0,
+      sessionsReserved: map['sessionsReserved'] as int? ?? 0,
+      sessionsBurned: map['sessionsBurned'] as int? ?? 0,
+      sessionsAvailable: map['sessionsAvailable'] as int? ?? 0,
       createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       cancelReason: map['cancelReason'] as String?,

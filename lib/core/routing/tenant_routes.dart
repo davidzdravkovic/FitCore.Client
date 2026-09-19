@@ -10,6 +10,7 @@ import 'package:fitcore_client/features/tenant/memberships/widgets/memberships_p
 import 'package:fitcore_client/features/tenant/plans/widgets/plans_panel.dart';
 import 'package:fitcore_client/features/tenant/services/widgets/services_panel.dart';
 import 'package:fitcore_client/features/tenant/staff/widgets/staff_panel.dart';
+import 'package:fitcore_client/features/tenant/visits/widgets/visits_panel.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -57,12 +58,7 @@ final List<RouteBase> tenantRoutes = [
       ),
       GoRoute(
         path: TenantPaths.schedule,
-        builder: (context, state) => const DashboardPlaceholderPanel(
-          title: 'Schedule',
-          description:
-              'Classes, trainers, and recurring sessions will show up here.',
-          icon: Icons.calendar_today_outlined,
-        ),
+        builder: (context, state) => const VisitsPanel(),
       ),
       GoRoute(
         path: TenantPaths.checkIns,
