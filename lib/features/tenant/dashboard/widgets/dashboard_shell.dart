@@ -1,3 +1,6 @@
+import 'dart:math' as math;
+
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
 import 'package:fitcore_client/features/tenant/dashboard/navigation/dashboard_nav_item.dart';
 import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_sidebar.dart';
@@ -23,13 +26,14 @@ class DashboardShell extends StatelessWidget {
   Widget build(BuildContext context) {
     final path = GoRouterState.of(context).uri.path;
     final selected = DashboardSection.fromLocation(path);
-    final wide = MediaQuery.sizeOf(context).width >=
+    final t = context.fc;
+    final wide =
+        MediaQuery.sizeOf(context).width >=
         DashboardLayout.sidebarCollapsedBreakpoint;
-    final dividerColor =
-        Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.55);
 
     if (wide) {
       return Scaffold(
+        backgroundColor: t.canvas,
         body: SafeArea(
           child: Row(
             children: [
@@ -40,9 +44,10 @@ class DashboardShell extends StatelessWidget {
                   organizationName: organizationName,
                 ),
               ),
-              VerticalDivider(width: 1, thickness: 1, color: dividerColor),
+              Container(width: 1, color: t.borderSubtle),
               Expanded(
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     DashboardTopBar(
                       title: dashboardSectionTitle(selected),
@@ -60,7 +65,12 @@ class DashboardShell extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: t.canvas,
       drawer: Drawer(
+        width: math.min(
+          DashboardLayout.sidebarWidth,
+          MediaQuery.sizeOf(context).width * 0.86,
+        ),
         child: SafeArea(
           child: DashboardSidebar(
             selected: selected,
@@ -73,6 +83,7 @@ class DashboardShell extends StatelessWidget {
         child: Builder(
           builder: (scaffoldContext) {
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 DashboardTopBar(
                   title: dashboardSectionTitle(selected),

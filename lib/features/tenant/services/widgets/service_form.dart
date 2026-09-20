@@ -6,11 +6,7 @@ import 'package:fitcore_client/features/tenant/services/models/service_response.
 import 'package:flutter/material.dart';
 
 class ServiceForm extends StatefulWidget {
-  const ServiceForm({
-    super.key,
-    this.servicesApi,
-    this.onCreated,
-  });
+  const ServiceForm({super.key, this.servicesApi, this.onCreated});
 
   final ServicesApi? servicesApi;
   final ValueChanged<ServiceResponse>? onCreated;
@@ -51,9 +47,8 @@ class _ServiceFormState extends State<ServiceForm> {
       widget.onCreated?.call(response);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -72,10 +67,7 @@ class _ServiceFormState extends State<ServiceForm> {
             controller: _nameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Name'),
             validator: (value) => Validators.required(value, 'Name'),
           ),
           const SizedBox(height: 16),
@@ -87,7 +79,6 @@ class _ServiceFormState extends State<ServiceForm> {
             onFieldSubmitted: (_) => _submit(),
             decoration: const InputDecoration(
               labelText: 'Description (optional)',
-              border: OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 24),

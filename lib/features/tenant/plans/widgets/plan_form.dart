@@ -76,9 +76,8 @@ class _PlanFormState extends State<PlanForm> {
       widget.onCreated?.call(response);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -111,10 +110,7 @@ class _PlanFormState extends State<PlanForm> {
             requestFocusOnTap: false,
             dropdownMenuEntries: [
               for (final service in widget.activeServices)
-                DropdownMenuEntry(
-                  value: service.id,
-                  label: service.name,
-                ),
+                DropdownMenuEntry(value: service.id, label: service.name),
             ],
             onSelected: _isSubmitting
                 ? null
@@ -129,10 +125,7 @@ class _PlanFormState extends State<PlanForm> {
             controller: _nameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.sentences,
-            decoration: const InputDecoration(
-              labelText: 'Plan name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Plan name'),
             validator: (value) => Validators.required(value, 'Plan name'),
           ),
           const SizedBox(height: 16),
@@ -144,10 +137,7 @@ class _PlanFormState extends State<PlanForm> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
             ],
-            decoration: const InputDecoration(
-              labelText: 'Price',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Price'),
             validator: (value) {
               final text = value?.trim() ?? '';
               if (text.isEmpty) return 'Price is required';
@@ -166,10 +156,7 @@ class _PlanFormState extends State<PlanForm> {
             textInputAction: TextInputAction.done,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onFieldSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Session count',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Session count'),
             validator: (value) {
               final n = int.tryParse(value?.trim() ?? '');
               if (n == null || n <= 0) {

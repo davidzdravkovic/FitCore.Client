@@ -1,6 +1,9 @@
 import 'dart:math' as math;
 
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
 import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:fitcore_client/features/tenant/visits/layout/coach_day_board_layout.dart';
 import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
@@ -23,6 +26,7 @@ class CoachDayBoard extends StatefulWidget {
     required this.onVisitTap,
     required this.onCoachTap,
     this.onSlotTap,
+    this.showToolbar = true,
   });
 
   final List<VisitResponse> visits;
@@ -32,6 +36,9 @@ class CoachDayBoard extends StatefulWidget {
   final ValueChanged<VisitResponse> onVisitTap;
   final ValueChanged<StaffResponse> onCoachTap;
   final void Function(StaffResponse coach, DateTime start)? onSlotTap;
+
+  /// When false, the parent owns day navigation (single command row).
+  final bool showToolbar;
 
   @override
   State<CoachDayBoard> createState() => _CoachDayBoardState();
@@ -120,90 +127,154 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       dayVisits: dayVisits,
     );
     final (firstHour, lastHour) = CoachDayBoardLayout.hourWindow(dayVisits);
-    final gridHeight =
-        (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
+    final gridHeight = (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
 
     _restoreScrollOnce(firstHour, dayVisits);
+
+    final compact =
+        MediaQuery.sizeOf(context).width < FitCoreBreakpoints.compact;
+
+    final grid = lanes.isEmpty
+        ? _buildEmptyState()
+        : _buildGrid(
+            theme,
+            lanes,
+            dayVisits,
+            firstHour,
+            lastHour,
+            gridHeight,
+          );
+
+    if (!widget.showToolbar) return grid;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _buildToolbar(theme, dayVisits.length),
-        const SizedBox(height: 12),
-        Expanded(
-          child: lanes.isEmpty
-              ? _buildEmptyState(theme)
-              : _buildGrid(theme, lanes, dayVisits, firstHour, lastHour,
-                  gridHeight),
-        ),
+        _buildToolbar(context, dayVisits.length),
+        SizedBox(height: compact ? FitCoreSpace.x2 : FitCoreSpace.x3),
+        Expanded(child: grid),
       ],
     );
   }
 
-  Widget _buildToolbar(ThemeData theme, int visitCount) {
+  Widget _buildToolbar(BuildContext context, int visitCount) {
+    final theme = Theme.of(context);
+    final t = context.fc;
     final isToday = isSameDay(widget.day, TenantClock.now());
+    final compact =
+        MediaQuery.sizeOf(context).width < FitCoreBreakpoints.compact;
+
+    final stepper = Container(
+      decoration: BoxDecoration(
+        color: t.panel,
+        borderRadius: BorderRadius.circular(FitCoreRadius.md),
+        border: Border.all(color: t.borderDefault),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _StepButton(
+            icon: Icons.chevron_left,
+            tooltip: 'Previous day',
+            onPressed: () => _shiftDay(-1),
+          ),
+          Container(width: 1, height: 22, color: t.borderSubtle),
+          _StepButton(
+            icon: Icons.chevron_right,
+            tooltip: 'Next day',
+            onPressed: () => _shiftDay(1),
+          ),
+        ],
+      ),
+    );
+
+    final today = compact
+        ? IconButton(
+            onPressed: isToday
+                ? null
+                : () {
+                    final now = TenantClock.now();
+                    widget.onDayChanged(DateTime(now.year, now.month, now.day));
+                  },
+            icon: const Icon(Icons.today_outlined, size: 18),
+            tooltip: 'Today',
+            visualDensity: VisualDensity.compact,
+          )
+        : OutlinedButton(
+            onPressed: isToday
+                ? null
+                : () {
+                    final now = TenantClock.now();
+                    widget.onDayChanged(DateTime(now.year, now.month, now.day));
+                  },
+            child: const Text('Today'),
+          );
+
+    final dayPicker = InkWell(
+      onTap: _pickDay,
+      borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: FitCoreSpace.x2,
+          vertical: FitCoreSpace.x2,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(
+              child: Text(
+                formatDayHeadline(widget.day, compact: compact),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall,
+              ),
+            ),
+            const SizedBox(width: FitCoreSpace.x1),
+            Icon(Icons.expand_more, size: 18, color: t.textSecondary),
+          ],
+        ),
+      ),
+    );
+
+    final count = FitCountBadge(
+      count: visitCount,
+      noun: compact
+          ? null
+          : (visitCount == 1 ? 'visit' : 'visits'),
+    );
+
+    if (compact) {
+      return Row(
+        children: [
+          stepper,
+          const SizedBox(width: FitCoreSpace.x2),
+          Expanded(child: dayPicker),
+          const SizedBox(width: FitCoreSpace.x1),
+          today,
+          const SizedBox(width: FitCoreSpace.x2),
+          count,
+        ],
+      );
+    }
 
     return Row(
       children: [
-        IconButton(
-          onPressed: () => _shiftDay(-1),
-          icon: const Icon(Icons.chevron_left),
-          tooltip: 'Previous day',
-        ),
-        IconButton(
-          onPressed: () => _shiftDay(1),
-          icon: const Icon(Icons.chevron_right),
-          tooltip: 'Next day',
-        ),
-        const SizedBox(width: 4),
-        OutlinedButton(
-          onPressed: isToday
-              ? null
-              : () {
-                  final now = TenantClock.now();
-                  widget.onDayChanged(DateTime(now.year, now.month, now.day));
-                },
-          child: const Text('Today'),
-        ),
-        const SizedBox(width: 12),
-        InkWell(
-          onTap: _pickDay,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  formatDayHeadline(widget.day),
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.arrow_drop_down, size: 20),
-              ],
-            ),
-          ),
-        ),
-        const Spacer(),
-        Text(
-          visitCount == 1 ? '1 visit' : '$visitCount visits',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
+        stepper,
+        const SizedBox(width: FitCoreSpace.x2),
+        today,
+        const SizedBox(width: FitCoreSpace.x2),
+        Flexible(child: dayPicker),
+        const SizedBox(width: FitCoreSpace.x3),
+        count,
       ],
     );
   }
 
-  Widget _buildEmptyState(ThemeData theme) {
-    return Center(
-      child: Text(
-        'Add staff before scheduling — coaches form the columns of this board.',
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
+  Widget _buildEmptyState() {
+    return const FitEmptyState(
+      icon: Icons.badge_outlined,
+      title: 'No coaches to show',
+      message: 'Add staff before scheduling — coaches form the columns of this board.',
     );
   }
 
@@ -215,7 +286,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     int lastHour,
     double gridHeight,
   ) {
-    final outline = theme.colorScheme.outlineVariant.withValues(alpha: 0.4);
+    final t = context.fc;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -248,9 +319,9 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
           ),
           child: Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              border: Border.all(color: outline),
-              borderRadius: BorderRadius.circular(12),
+              color: t.panel,
+              border: Border.all(color: t.borderSubtle),
+              borderRadius: BorderRadius.circular(FitCoreRadius.lg),
             ),
             clipBehavior: Clip.antiAlias,
             child: Column(
@@ -261,7 +332,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                     children: [
                       SizedBox(
                         width: CoachDayBoardMetrics.rulerWidth,
-                        child: _headerCorner(theme),
+                        child: _headerCorner(context),
                       ),
                       Expanded(
                         child: SingleChildScrollView(
@@ -274,7 +345,11 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                               children: [
                                 for (final lane in lanes)
                                   _buildLaneHeader(
-                                      theme, lane, laneWidth, dayVisits),
+                                    context,
+                                    lane,
+                                    laneWidth,
+                                    dayVisits,
+                                  ),
                               ],
                             ),
                           ),
@@ -296,7 +371,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                           controller: _rulerScroll,
                           child: SizedBox(
                             height: gridHeight,
-                            child: _buildRuler(theme, firstHour, lastHour),
+                            child: _buildRuler(context, firstHour, lastHour),
                           ),
                         ),
                       ),
@@ -324,7 +399,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                                           children: [
                                             for (final lane in lanes)
                                               _buildLane(
-                                                theme,
+                                                context,
                                                 lane,
                                                 dayVisits,
                                                 laneWidth,
@@ -334,7 +409,10 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                                           ],
                                         ),
                                         ..._buildNowIndicator(
-                                            theme, firstHour, lastHour),
+                                          context,
+                                          firstHour,
+                                          lastHour,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -355,33 +433,37 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
   }
 
-  Widget _headerCorner(ThemeData theme) {
+  Widget _headerCorner(BuildContext context) {
+    final theme = Theme.of(context);
+    final t = context.fc;
+
     return Container(
       alignment: Alignment.bottomRight,
-      padding: const EdgeInsets.only(right: 10, bottom: 8),
+      padding: const EdgeInsets.only(right: 10, bottom: FitCoreSpace.x2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        border: Border(
-          bottom: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-          ),
-        ),
+        color: t.canvas,
+        border: Border(bottom: BorderSide(color: t.borderDefault)),
       ),
       child: Text(
-        'Time',
+        'TIME',
         style: theme.textTheme.labelSmall?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
+          color: t.textMuted,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.6,
+          fontSize: 11,
         ),
       ),
     );
   }
 
   Widget _buildLaneHeader(
-    ThemeData theme,
+    BuildContext context,
     CoachDayLane lane,
     double width,
     List<VisitResponse> dayVisits,
   ) {
+    final theme = Theme.of(context);
+    final t = context.fc;
     final count = CoachDayBoardLayout.visitsInLane(
       dayVisits: dayVisits,
       lane: lane,
@@ -393,35 +475,37 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     return SizedBox(
       width: width,
       child: Material(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        color: t.canvas,
         child: InkWell(
           onTap: tappable ? () => widget.onCoachTap(lane.staff!) : null,
           child: Container(
             decoration: BoxDecoration(
               border: Border(
-                bottom: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-                ),
-                right: BorderSide(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.25),
-                ),
+                bottom: BorderSide(color: t.borderDefault),
+                right: BorderSide(color: t.borderSubtle),
               ),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: FitCoreSpace.x3),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 15,
-                  backgroundColor: theme.colorScheme.primaryContainer,
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: t.elevated,
+                    borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+                    border: Border.all(color: t.borderDefault),
+                  ),
                   child: Text(
                     initials,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onPrimaryContainer,
-                      fontWeight: FontWeight.w600,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: t.textSecondary,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: FitCoreSpace.x2),
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -431,24 +515,19 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                         lane.name.isEmpty ? 'Unassigned' : lane.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: theme.textTheme.titleSmall
-                            ?.copyWith(fontWeight: FontWeight.w600),
+                        style: theme.textTheme.titleSmall,
                       ),
                       Text(
                         count == 1 ? '1 visit' : '$count visits',
                         style: theme.textTheme.labelSmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
+                          color: t.textMuted,
                         ),
                       ),
                     ],
                   ),
                 ),
                 if (tappable)
-                  Icon(
-                    Icons.open_in_new,
-                    size: 15,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
+                  Icon(Icons.north_east, size: 14, color: t.textMuted),
               ],
             ),
           ),
@@ -457,14 +536,13 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
   }
 
-  Widget _buildRuler(ThemeData theme, int firstHour, int lastHour) {
+  Widget _buildRuler(BuildContext context, int firstHour, int lastHour) {
+    final theme = Theme.of(context);
+    final t = context.fc;
+
     return Container(
       decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-          ),
-        ),
+        border: Border(right: BorderSide(color: t.borderSubtle)),
       ),
       child: Column(
         children: [
@@ -478,7 +556,8 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                   child: Text(
                     formatHourLabel(hour),
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+                      color: t.textMuted,
+                      fontFeatures: const [FontFeature.tabularFigures()],
                     ),
                   ),
                 ),
@@ -490,7 +569,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
   }
 
   Widget _buildLane(
-    ThemeData theme,
+    BuildContext context,
     CoachDayLane lane,
     List<VisitResponse> dayVisits,
     double width,
@@ -503,9 +582,9 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       staff: widget.staff,
     );
     final placements = CoachDayBoardLayout.placeOverlaps(laneVisits);
-    final gridHeight =
-        (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
+    final gridHeight = (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
     final coach = lane.staff;
+    final t = context.fc;
 
     return SizedBox(
       width: width,
@@ -521,21 +600,19 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                     onTap: (coach == null || widget.onSlotTap == null)
                         ? null
                         : () => widget.onSlotTap!(
-                              coach,
-                              DateTime(widget.day.year, widget.day.month,
-                                  widget.day.day, hour),
+                            coach,
+                            DateTime(
+                              widget.day.year,
+                              widget.day.month,
+                              widget.day.day,
+                              hour,
                             ),
+                          ),
                     child: Container(
                       decoration: BoxDecoration(
                         border: Border(
-                          top: BorderSide(
-                            color: theme.colorScheme.outlineVariant
-                                .withValues(alpha: 0.22),
-                          ),
-                          right: BorderSide(
-                            color: theme.colorScheme.outlineVariant
-                                .withValues(alpha: 0.25),
-                          ),
+                          top: BorderSide(color: t.borderSubtle),
+                          right: BorderSide(color: t.borderSubtle),
                         ),
                       ),
                     ),
@@ -544,7 +621,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             ],
           ),
           for (final placement in placements)
-            _buildVisitBlock(theme, placement, width, firstHour),
+            _buildVisitBlock(Theme.of(context), placement, width, firstHour),
         ],
       ),
     );
@@ -576,7 +653,11 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
   }
 
-  List<Widget> _buildNowIndicator(ThemeData theme, int firstHour, int lastHour) {
+  List<Widget> _buildNowIndicator(
+    BuildContext context,
+    int firstHour,
+    int lastHour,
+  ) {
     final offset = CoachDayBoardLayout.nowLineOffset(
       day: widget.day,
       firstHour: firstHour,
@@ -584,28 +665,52 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
     if (offset == null) return const [];
 
+    final now = context.fc.stateNegative;
+
     return [
       Positioned(
-        top: offset - 4,
+        top: offset - 3,
         left: 0,
         right: 0,
         child: Row(
           children: [
             Container(
-              width: 8,
-              height: 8,
-              decoration: const BoxDecoration(
-                color: Color(0xFFE2624F),
-                shape: BoxShape.circle,
-              ),
+              width: 6,
+              height: 6,
+              decoration: BoxDecoration(color: now, shape: BoxShape.circle),
             ),
-            const Expanded(
-              child: Divider(color: Color(0xFFE2624F), thickness: 1.4),
-            ),
+            Expanded(child: Divider(color: now, thickness: 1)),
           ],
         ),
       ),
     ];
+  }
+}
+
+class _StepButton extends StatelessWidget {
+  const _StepButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 38,
+      height: 38,
+      child: IconButton(
+        onPressed: onPressed,
+        tooltip: tooltip,
+        padding: EdgeInsets.zero,
+        iconSize: 18,
+        icon: Icon(icon),
+      ),
+    );
   }
 }
 
@@ -622,31 +727,32 @@ class _VisitBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = context.fc;
     final tone = visitToneOf(visit.status);
     final color = tone.color;
-    final range =
-        '${formatClock(visit.startAt)} – ${formatClock(visit.endAt)}';
+    final range = '${formatClock(visit.startAt)} – ${formatClock(visit.endAt)}';
 
     return Tooltip(
       waitDuration: const Duration(milliseconds: 400),
-      message: '${visit.memberName}\n'
+      message:
+          '${visit.memberName}\n'
           '${visit.serviceName}\n'
           '$range · ${tone.label}\n'
           'Coach ${visit.coachName}',
       child: Material(
         color: Color.alphaBlend(
-          color.withValues(alpha: tone.isRetired ? 0.1 : 0.2),
-          theme.colorScheme.surface,
+          color.withValues(alpha: tone.isRetired ? 0.07 : 0.14),
+          t.panel,
         ),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(FitCoreRadius.sm),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(FitCoreRadius.sm),
               border: Border.all(
-                color: color.withValues(alpha: tone.isRetired ? 0.4 : 0.85),
+                color: color.withValues(alpha: tone.isRetired ? 0.35 : 0.6),
               ),
             ),
             child: LayoutBuilder(
@@ -655,12 +761,12 @@ class _VisitBlock extends StatelessWidget {
 
                 return Row(
                   children: [
-                    Container(width: 4, color: color),
+                    Container(width: 3, color: color),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: compact ? 3 : 6,
+                          horizontal: FitCoreSpace.x2,
+                          vertical: compact ? 3 : FitCoreSpace.x1 + 2,
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,21 +777,24 @@ class _VisitBlock extends StatelessWidget {
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.labelSmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
+                                color: t.textSecondary,
                                 fontWeight: FontWeight.w500,
+                                fontFeatures: const [
+                                  FontFeature.tabularFigures(),
+                                ],
                               ),
                             ),
                             if (!compact) ...[
-                              const SizedBox(height: 2),
+                              const SizedBox(height: 1),
                               Text(
                                 visit.memberName,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
+                                style: theme.textTheme.labelLarge?.copyWith(
                                   decoration: tone.isRetired
                                       ? TextDecoration.lineThrough
                                       : null,
+                                  decorationColor: t.textMuted,
                                 ),
                               ),
                               Flexible(
@@ -694,7 +803,7 @@ class _VisitBlock extends StatelessWidget {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.labelSmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
+                                    color: t.textMuted,
                                   ),
                                 ),
                               ),

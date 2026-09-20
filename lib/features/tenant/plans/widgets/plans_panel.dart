@@ -1,4 +1,8 @@
-import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
+import 'package:fitcore_client/core/widgets/fit_data_panel.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
+import 'package:fitcore_client/core/widgets/fit_record_table.dart';
+import 'package:fitcore_client/core/widgets/fit_status_chip.dart';
 import 'package:fitcore_client/features/tenant/plans/models/plan_response.dart';
 import 'package:fitcore_client/features/tenant/plans/plans_controller.dart';
 import 'package:fitcore_client/features/tenant/plans/widgets/plan_form.dart';
@@ -33,8 +37,9 @@ class _PlansPanelState extends State<PlansPanel> {
   }
 
   Future<void> _openCreateForm() async {
-    final activeServices =
-        _controller.services.where((s) => s.isActive).toList();
+    final activeServices = _controller.services
+        .where((s) => s.isActive)
+        .toList();
 
     final created = await showDialog<bool>(
       context: context,
@@ -108,100 +113,93 @@ class _PlansPanelState extends State<PlansPanel> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final theme = Theme.of(context);
+        final plans = _controller.plans;
 
-        return Padding(
-          padding: const EdgeInsets.all(DashboardLayout.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: FilledButton.icon(
-                  onPressed: _openCreateForm,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add plan'),
-                ),
+        return FitPageBody(
+          header: FitPageHeader(
+            title: 'Plans',
+            description: 'Sellable packages built on top of your services.',
+            meta: plans.isNotEmpty
+                ? FitCountBadge(count: plans.length, noun: 'total')
+                : null,
+            actions: [
+              FilledButton.icon(
+                onPressed: _openCreateForm,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add plan'),
               ),
-              const SizedBox(height: 24),
-              Expanded(child: _buildBody(theme)),
             ],
           ),
+          child: FitDataPanel(child: _buildBody()),
         );
       },
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody() {
     if (_controller.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const FitTableSkeleton(columnFlex: [3, 2, 1, 3, 2]);
     }
 
     if (_controller.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_controller.error!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _controller.load,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return FitErrorState(
+        message: _controller.error!,
+        onRetry: _controller.load,
       );
     }
 
     if (_controller.plans.isEmpty) {
-      return Center(
-        child: Text(
-          'No plans yet. Create a service, then add a plan to sell.',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
+      return FitEmptyState(
+        icon: Icons.sell_outlined,
+        title: 'No plans yet',
+        message: 'Create a service, then add a plan to sell.',
+        action: FilledButton.icon(
+          onPressed: _openCreateForm,
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Add plan'),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Name')),
-            DataColumn(label: Text('Service')),
-            DataColumn(label: Text('Price')),
-            DataColumn(label: Text('Entitlement')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('')),
-          ],
-          rows: [
-            for (final plan in _controller.plans)
-              DataRow(
-                cells: [
-                  DataCell(Text(plan.name)),
-                  DataCell(Text(_controller.serviceName(plan.serviceId))),
-                  DataCell(Text(plan.price.toStringAsFixed(2))),
-                  DataCell(Text(
-                    '${plan.entitlementType.label} · ${plan.entitlementSummary}',
-                  )),
-                  DataCell(Text(plan.isActive ? 'Active' : 'Inactive')),
-                  DataCell(
-                    plan.isActive
-                        ? IconButton(
-                            tooltip: 'Deactivate',
-                            onPressed: () => _deactivate(plan),
-                            icon: const Icon(Icons.block_outlined),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-          ],
+    return FitRecordTable(
+      columns: const [
+        FitColumn(label: 'Name', flex: 3, minWidth: 170),
+        FitColumn(label: 'Service', flex: 2, minWidth: 140),
+        FitColumn(label: 'Price', flex: 1, minWidth: 90),
+        FitColumn(
+          label: 'Entitlement',
+          flex: 3,
+          minWidth: 200,
+          hideBelow: 1100,
         ),
-      ),
+        FitColumn(label: 'Status', flex: 2, minWidth: 130),
+      ],
+      rows: [
+        for (final plan in _controller.plans)
+          FitRecordRow(
+            cells: [
+              FitTextCell(plan.name, strong: true),
+              FitTextCell(_controller.serviceName(plan.serviceId), muted: true),
+              FitTextCell(plan.price.toStringAsFixed(2), mono: true),
+              FitTextCell(
+                '${plan.entitlementType.label} · ${plan.entitlementSummary}',
+                muted: true,
+              ),
+              FitStatusChip(
+                label: plan.isActive ? 'Active' : 'Inactive',
+                tone: plan.isActive ? FitTone.positive : FitTone.muted,
+              ),
+            ],
+            actions: [
+              if (plan.isActive)
+                FitRowAction(
+                  icon: Icons.block_outlined,
+                  tooltip: 'Deactivate',
+                  onPressed: () => _deactivate(plan),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }

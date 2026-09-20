@@ -1,7 +1,13 @@
 import 'package:fitcore_client/core/api/api_client.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/routing/platform_paths.dart';
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
+import 'package:fitcore_client/core/widgets/fit_data_panel.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
+import 'package:fitcore_client/core/widgets/fit_record_table.dart';
+import 'package:fitcore_client/core/widgets/fit_status_chip.dart';
 import 'package:fitcore_client/features/platform/dashboard/api/invitations_api.dart';
 import 'package:fitcore_client/features/platform/dashboard/api/tenants_api.dart';
 import 'package:fitcore_client/features/platform/dashboard/models/create_invite_request.dart';
@@ -83,9 +89,8 @@ class _PlatformDashboardPageState extends State<PlatformDashboardPage> {
       );
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -120,128 +125,75 @@ class _PlatformDashboardPageState extends State<PlatformDashboardPage> {
     try {
       await _tenantsApi.cancel(tenant.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${tenant.name} cancelled')),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('${tenant.name} cancelled')));
       await _loadTenants();
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.fc;
+    final compact =
+        MediaQuery.sizeOf(context).width < FitCoreBreakpoints.medium;
+    final pad = compact ? FitCoreSpace.x4 : FitCoreSpace.x6;
 
     return Scaffold(
+      backgroundColor: t.canvas,
       appBar: AppBar(
+        backgroundColor: t.canvas,
         title: const Text('Platform'),
+        shape: Border(bottom: BorderSide(color: t.borderSubtle)),
         actions: [
           TextButton(
             onPressed: () {
               ApiClient.instance.setAccessToken(null);
               context.go(PlatformPaths.login);
             },
+            style: TextButton.styleFrom(foregroundColor: t.textSecondary),
             child: const Text('Sign out'),
           ),
+          const SizedBox(width: FitCoreSpace.x2),
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        child: SingleChildScrollView(
+          child: Align(
+            alignment: Alignment.topCenter,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 720),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Invite gym',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Send a free-plan invitation to a gym owner’s email.',
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        TextFormField(
-                          autovalidateMode: AutovalidateMode.onUserInteraction,
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.done,
-                          autofillHints: const [AutofillHints.email],
-                          onFieldSubmitted: (_) => _submit(),
-                          decoration: const InputDecoration(
-                            labelText: 'Owner email',
-                            hintText: 'owner@gym.com',
-                            prefixIcon: Icon(Icons.mail_outline),
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: Validators.email,
-                        ),
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: _isSubmitting ? null : _submit,
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                          ),
-                          child: _isSubmitting
-                              ? const SizedBox(
-                                  height: 22,
-                                  width: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Send invite'),
+              constraints: const BoxConstraints(maxWidth: 880),
+              child: Padding(
+                padding: EdgeInsets.all(pad),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildInviteCard(context),
+                    const SizedBox(height: FitCoreSpace.x6),
+                    FitPageHeader(
+                      title: 'Organizations',
+                      description: 'Cancel soft-deletes a gym by setting status to Cancelled.',
+                      meta: _tenants.isNotEmpty
+                          ? FitCountBadge(count: _tenants.length, noun: 'total')
+                          : null,
+                      actions: [
+                        OutlinedButton.icon(
+                          onPressed: _isLoadingTenants ? null : _loadTenants,
+                          icon: const Icon(Icons.refresh, size: 16),
+                          label: const Text('Refresh'),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 48),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Organizations',
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Refresh',
-                        onPressed: _isLoadingTenants ? null : _loadTenants,
-                        icon: const Icon(Icons.refresh),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Cancel soft-deletes a gym by setting status to Cancelled.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
+                    const SizedBox(height: FitCoreSpace.x4),
+                    SizedBox(
+                      height: 420,
+                      child: FitDataPanel(child: _buildTenantsBody()),
                     ),
-                  ),
-                  const SizedBox(height: 20),
-                  _buildTenantsBody(theme),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
@@ -250,67 +202,140 @@ class _PlatformDashboardPageState extends State<PlatformDashboardPage> {
     );
   }
 
-  Widget _buildTenantsBody(ThemeData theme) {
+  Widget _buildInviteCard(BuildContext context) {
+    final theme = Theme.of(context);
+    final t = context.fc;
+
+    return Container(
+      padding: const EdgeInsets.all(FitCoreSpace.x5),
+      decoration: BoxDecoration(
+        color: t.panel,
+        borderRadius: BorderRadius.circular(FitCoreRadius.lg),
+        border: Border.all(color: t.borderSubtle),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Invite gym', style: theme.textTheme.titleMedium),
+            const SizedBox(height: FitCoreSpace.x1),
+            Text(
+              'Send a free-plan invitation to a gym owner’s email.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: t.textSecondary,
+              ),
+            ),
+            const SizedBox(height: FitCoreSpace.x5),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final field = TextFormField(
+                  autovalidateMode: AutovalidateMode.onUserInteraction,
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const [AutofillHints.email],
+                  onFieldSubmitted: (_) => _submit(),
+                  decoration: const InputDecoration(
+                    labelText: 'Owner email',
+                    hintText: 'owner@gym.com',
+                    prefixIcon: Icon(Icons.mail_outline, size: 18),
+                  ),
+                  validator: Validators.email,
+                );
+
+                final submit = FilledButton(
+                  onPressed: _isSubmitting ? null : _submit,
+                  style: FilledButton.styleFrom(
+                    minimumSize: const Size.fromHeight(44),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send invite'),
+                );
+
+                if (constraints.maxWidth < FitCoreBreakpoints.compact) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      field,
+                      const SizedBox(height: FitCoreSpace.x4),
+                      submit,
+                    ],
+                  );
+                }
+
+                return Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: field),
+                    const SizedBox(width: FitCoreSpace.x3),
+                    SizedBox(width: 150, child: submit),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTenantsBody() {
     if (_isLoadingTenants) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const FitTableSkeleton(columnFlex: [3, 3, 1, 2]);
     }
 
     if (_tenantsError != null) {
-      return Column(
-        children: [
-          Text(_tenantsError!, textAlign: TextAlign.center),
-          const SizedBox(height: 12),
-          FilledButton(
-            onPressed: _loadTenants,
-            child: const Text('Retry'),
-          ),
-        ],
-      );
+      return FitErrorState(message: _tenantsError!, onRetry: _loadTenants);
     }
 
     if (_tenants.isEmpty) {
-      return Text(
-        'No organizations yet.',
-        style: theme.textTheme.bodyLarge?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
+      return const FitEmptyState(
+        icon: Icons.apartment_outlined,
+        title: 'No organizations yet',
+        message: 'Invited gyms appear here once they register.',
       );
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columns: const [
-          DataColumn(label: Text('Name')),
-          DataColumn(label: Text('Email')),
-          DataColumn(label: Text('Currency')),
-          DataColumn(label: Text('Status')),
-          DataColumn(label: Text('')),
-        ],
-        rows: [
-          for (final tenant in _tenants)
-            DataRow(
-              cells: [
-                DataCell(Text(tenant.name)),
-                DataCell(Text(tenant.businessEmail)),
-                DataCell(Text(tenant.currency.isEmpty ? '—' : tenant.currency)),
-                DataCell(Text(tenant.status)),
-                DataCell(
-                  tenant.isCancelled
-                      ? const Text('—')
-                      : IconButton(
-                          tooltip: 'Cancel organization',
-                          onPressed: () => _cancelTenant(tenant),
-                          icon: const Icon(Icons.cancel_outlined),
-                        ),
+    return FitRecordTable(
+      columns: const [
+        FitColumn(label: 'Name', flex: 3, minWidth: 170),
+        FitColumn(label: 'Email', flex: 3, minWidth: 200),
+        FitColumn(label: 'Currency', flex: 1, minWidth: 100, hideBelow: 820),
+        FitColumn(label: 'Status', flex: 2, minWidth: 130),
+      ],
+      rows: [
+        for (final tenant in _tenants)
+          FitRecordRow(
+            leading: FitAvatar(name: tenant.name),
+            cells: [
+              FitTextCell(tenant.name, strong: true),
+              FitTextCell(tenant.businessEmail, muted: true),
+              if (tenant.currency.isEmpty)
+                const FitTextCell.empty()
+              else
+                FitTextCell(tenant.currency, mono: true),
+              FitStatusChip(
+                label: tenant.status,
+                tone: tenant.isCancelled ? FitTone.negative : FitTone.positive,
+              ),
+            ],
+            actions: [
+              if (!tenant.isCancelled)
+                FitRowAction(
+                  icon: Icons.cancel_outlined,
+                  tooltip: 'Cancel organization',
+                  danger: true,
+                  onPressed: () => _cancelTenant(tenant),
                 ),
-              ],
-            ),
-        ],
-      ),
+            ],
+          ),
+      ],
     );
   }
 }

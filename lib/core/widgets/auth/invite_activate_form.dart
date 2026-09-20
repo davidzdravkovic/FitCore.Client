@@ -1,5 +1,7 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
+import 'package:fitcore_client/core/widgets/fit_auth_scaffold.dart';
 import 'package:flutter/material.dart';
 
 typedef InviteActivateSubmit = Future<void> Function(
@@ -17,8 +19,7 @@ class InviteActivateForm extends StatefulWidget {
     required this.onMissingTokenLogin,
     required this.onSubmit,
     this.title = 'Set your password',
-    this.missingTokenMessage =
-        'This invitation link is missing its token. Ask your gym to send a new invite.',
+    this.missingTokenMessage = 'This invitation link is missing its token. Ask your gym to send a new invite.',
     this.submitLabel = 'Save password',
   });
 
@@ -62,9 +63,8 @@ class _InviteActivateFormState extends State<InviteActivateForm> {
       await widget.onSubmit(widget.token!, _passwordController.text);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -72,122 +72,71 @@ class _InviteActivateFormState extends State<InviteActivateForm> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
+    return FitAuthScaffold(
+      title: widget.title,
+      subtitle: _hasToken
+          ? widget.instructionsWithToken
+          : widget.missingTokenMessage,
+      child: _hasToken
+          ? Form(
+              key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Text(
-                    widget.title,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    _hasToken
-                        ? widget.instructionsWithToken
-                        : widget.missingTokenMessage,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  if (_hasToken)
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          TextFormField(
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.next,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline),
-                              border: const OutlineInputBorder(),
-                              suffixIcon: IconButton(
-                                onPressed: () {
-                                  setState(
-                                    () => _obscurePassword = !_obscurePassword,
-                                  );
-                                },
-                                icon: Icon(
-                                  _obscurePassword
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                ),
-                              ),
-                            ),
-                            validator: Validators.password,
-                          ),
-                          const SizedBox(height: 16),
-                          TextFormField(
-                            autovalidateMode:
-                                AutovalidateMode.onUserInteraction,
-                            controller: _confirmController,
-                            obscureText: _obscurePassword,
-                            textInputAction: TextInputAction.done,
-                            onFieldSubmitted: (_) => _submit(),
-                            decoration: const InputDecoration(
-                              labelText: 'Confirm password',
-                              prefixIcon: Icon(Icons.lock_outline),
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (value) {
-                              if (value != _passwordController.text) {
-                                return 'Passwords do not match';
-                              }
-                              return Validators.password(value);
-                            },
-                          ),
-                          const SizedBox(height: 28),
-                          FilledButton(
-                            onPressed: _isSubmitting ? null : _submit,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size.fromHeight(48),
-                            ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(widget.submitLabel),
-                          ),
-                        ],
+                  TextFormField(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock_outline, size: 18),
+                      suffixIcon: IconButton(
+                        onPressed: () {
+                          setState(() => _obscurePassword = !_obscurePassword);
+                        },
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 18,
+                        ),
                       ),
-                    )
-                  else
-                    FilledButton(
-                      onPressed: widget.onMissingTokenLogin,
-                      style: FilledButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                      ),
-                      child: Text(widget.missingTokenLoginLabel),
                     ),
+                    validator: Validators.password,
+                  ),
+                  const SizedBox(height: FitCoreSpace.x4),
+                  TextFormField(
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    controller: _confirmController,
+                    obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _submit(),
+                    decoration: const InputDecoration(
+                      labelText: 'Confirm password',
+                      prefixIcon: Icon(Icons.lock_outline, size: 18),
+                    ),
+                    validator: (value) {
+                      if (value != _passwordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return Validators.password(value);
+                    },
+                  ),
+                  const SizedBox(height: FitCoreSpace.x6),
+                  FitAuthSubmitButton(
+                    label: widget.submitLabel,
+                    isSubmitting: _isSubmitting,
+                    onPressed: _submit,
+                  ),
                 ],
               ),
+            )
+          : FitAuthSubmitButton(
+              label: widget.missingTokenLoginLabel,
+              isSubmitting: false,
+              onPressed: widget.onMissingTokenLogin,
             ),
-          ),
-        ),
-      ),
     );
   }
 }

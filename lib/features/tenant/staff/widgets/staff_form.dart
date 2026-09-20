@@ -6,11 +6,7 @@ import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart'
 import 'package:flutter/material.dart';
 
 class StaffForm extends StatefulWidget {
-  const StaffForm({
-    super.key,
-    this.staffApi,
-    this.onCreated,
-  });
+  const StaffForm({super.key, this.staffApi, this.onCreated});
 
   final StaffApi? staffApi;
   final ValueChanged<StaffResponse>? onCreated;
@@ -56,9 +52,8 @@ class _StaffFormState extends State<StaffForm> {
       widget.onCreated?.call(response);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -89,10 +84,7 @@ class _StaffFormState extends State<StaffForm> {
             controller: _firstNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'First name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'First name'),
             validator: (value) => Validators.required(value, 'First name'),
           ),
           const SizedBox(height: 16),
@@ -101,10 +93,7 @@ class _StaffFormState extends State<StaffForm> {
             controller: _lastNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Last name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Last name'),
             validator: (value) => Validators.required(value, 'Last name'),
           ),
           const SizedBox(height: 16),
@@ -115,10 +104,7 @@ class _StaffFormState extends State<StaffForm> {
             textInputAction: TextInputAction.done,
             autofillHints: const [AutofillHints.email],
             onFieldSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Email',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Email'),
             validator: Validators.email,
           ),
           const SizedBox(height: 24),

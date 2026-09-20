@@ -1,5 +1,7 @@
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:flutter/material.dart';
 
+/// Quiet metric tile: value first, then what it counts, then how it is counted.
 class OverviewStatCard extends StatelessWidget {
   const OverviewStatCard({
     super.key,
@@ -8,6 +10,8 @@ class OverviewStatCard extends StatelessWidget {
     required this.icon,
     this.accent,
     this.hint,
+    this.isLoading = false,
+    this.compact = false,
   });
 
   final String label;
@@ -15,64 +19,74 @@ class OverviewStatCard extends StatelessWidget {
   final IconData icon;
   final Color? accent;
   final String? hint;
+  final bool isLoading;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final tint = accent ?? colorScheme.primary;
+    final t = context.fc;
+    final tint = accent ?? t.accent;
+    final pad = compact ? FitCoreSpace.x3 : FitCoreSpace.x4;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      padding: EdgeInsets.all(pad),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.35),
-        ),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            tint.withValues(alpha: 0.16),
-            colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
-          ],
-        ),
+        color: t.panel,
+        borderRadius: BorderRadius.circular(FitCoreRadius.lg),
+        border: Border.all(color: t.borderSubtle),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: tint.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, size: 22, color: tint),
+          Row(
+            children: [
+              Icon(icon, size: compact ? 14 : 15, color: tint),
+              const SizedBox(width: FitCoreSpace.x2),
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: t.textMuted,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.6,
+                    fontSize: compact ? 10 : 11,
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 18),
-          Text(
-            value,
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              letterSpacing: -1,
-              height: 1,
+          SizedBox(height: compact ? FitCoreSpace.x2 : FitCoreSpace.x4),
+          if (isLoading)
+            Container(
+              height: compact ? 22 : 26,
+              width: 56,
+              decoration: BoxDecoration(
+                color: t.elevated,
+                borderRadius: BorderRadius.circular(FitCoreRadius.xs),
+              ),
+            )
+          else
+            Text(
+              value,
+              style: (compact
+                      ? theme.textTheme.headlineSmall
+                      : theme.textTheme.displaySmall)
+                  ?.copyWith(
+                height: 1,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: colorScheme.onSurface,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          if (hint != null) ...[
-            const SizedBox(height: 4),
+          if (hint != null && !compact) ...[
+            const SizedBox(height: FitCoreSpace.x2),
             Text(
               hint!,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: t.textSecondary,
               ),
             ),
           ],

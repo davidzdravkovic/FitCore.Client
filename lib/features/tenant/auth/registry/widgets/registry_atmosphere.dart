@@ -1,7 +1,8 @@
-import 'dart:math' as math;
-
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:flutter/material.dart';
 
+/// Quiet backdrop for the registry page: flat canvas, a hairline grid, and a
+/// single low-contrast accent wash that drifts a few pixels.
 class RegistryAtmosphere extends StatelessWidget {
   const RegistryAtmosphere({super.key, required this.animation});
 
@@ -9,92 +10,39 @@ class RegistryAtmosphere extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final t = context.fc;
 
     return AnimatedBuilder(
       animation: animation,
       builder: (context, _) {
-        final t = animation.value;
-        final dx = math.sin(t * math.pi * 2) * 28;
-        final dy = math.cos(t * math.pi * 2) * 18;
-
-        return DecoratedBox(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colorScheme.surface,
-                Color.lerp(
-                      colorScheme.surface,
-                      colorScheme.primaryContainer,
-                      0.22,
-                    ) ??
-                    colorScheme.surface,
-                colorScheme.surface,
-              ],
-              stops: const [0, 0.45, 1],
-            ),
-          ),
+        return ColoredBox(
+          color: t.canvas,
           child: Stack(
             fit: StackFit.expand,
             children: [
-              CustomPaint(
-                painter: _GridPainter(
-                  color: colorScheme.onSurface.withValues(alpha: 0.045),
-                ),
-              ),
-              Positioned(
-                left: -80 + dx,
-                top: -40 + dy,
-                child: _GlowOrb(
-                  diameter: 340,
-                  color: colorScheme.primary.withValues(alpha: 0.16),
-                ),
-              ),
-              Positioned(
-                right: -60 - dx,
-                bottom: 40 - dy,
-                child: _GlowOrb(
-                  diameter: 280,
-                  color: colorScheme.tertiary.withValues(alpha: 0.12),
-                ),
-              ),
-              Positioned(
-                right: 18,
-                top: 72,
-                child: _GlowOrb(
-                  diameter: 120,
-                  color: colorScheme.secondary.withValues(alpha: 0.08),
+              CustomPaint(painter: _GridPainter(color: t.borderSubtle)),
+              Align(
+                alignment: Alignment(-0.9, -1 + (animation.value * 0.04)),
+                child: IgnorePointer(
+                  child: Container(
+                    width: 420,
+                    height: 420,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: RadialGradient(
+                        colors: [
+                          t.accent.withValues(alpha: 0.07),
+                          t.accent.withValues(alpha: 0),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
         );
       },
-    );
-  }
-}
-
-class _GlowOrb extends StatelessWidget {
-  const _GlowOrb({required this.diameter, required this.color});
-
-  final double diameter;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: diameter,
-        height: diameter,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [color, color.withValues(alpha: 0)],
-          ),
-        ),
-      ),
     );
   }
 }
@@ -110,7 +58,7 @@ class _GridPainter extends CustomPainter {
       ..color = color
       ..strokeWidth = 1;
 
-    const step = 48.0;
+    const step = 56.0;
     for (double x = 0; x < size.width; x += step) {
       canvas.drawLine(Offset(x, 0), Offset(x, size.height), paint);
     }

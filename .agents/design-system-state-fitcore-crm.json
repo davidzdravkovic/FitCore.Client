@@ -1,0 +1,47 @@
+{
+  "runId": "fitcore-crm-kit-2026-09-20",
+  "fileKey": "45QuchPN56OKUMCsd58t6j",
+  "fileUrl": "https://www.figma.com/design/45QuchPN56OKUMCsd58t6j",
+  "phase": "phase3-partial",
+  "blockedBy": "Figma MCP Starter rate limit — TenantShell + Schedule + Compositions pending",
+  "entities": {
+    "collections": {
+      "primitives": "VariableCollectionId:2:2",
+      "color": "VariableCollectionId:2:3",
+      "space": "VariableCollectionId:2:4",
+      "radius": "VariableCollectionId:2:5"
+    },
+    "pages": {
+      "01 Foundations": "0:1",
+      "02 Components": "2:93",
+      "03 Compositions": "2:94"
+    },
+    "components": {
+      "StatusChip": "2:232",
+      "EntityRow": "2:273",
+      "PageHeader": "3:10",
+      "EmptyState": "3:21",
+      "ErrorState": "3:26",
+      "SkeletonState": "3:31",
+      "DataPanel": "3:39"
+    },
+    "foundationsBoard": "2:99"
+  },
+  "completedSteps": [
+    "P0",
+    "P1",
+    "P2-pages",
+    "P3-StatusChip",
+    "P3-EntityRow",
+    "P3-PageHeader",
+    "P3-EmptyErrorSkeleton",
+    "P3-DataPanel"
+  ],
+  "pendingSteps": [
+    "P3-TenantShell-Desktop",
+    "P3-TenantShell-Mobile",
+    "P3-ScheduleBoard",
+    "P3-Compositions",
+    "P4-QA-screenshots"
+  ]
+}

@@ -63,9 +63,8 @@ class _MemberFormState extends State<MemberForm> {
       widget.onCreated?.call(response);
     } on ApiException catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.message)),
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(e.message)));
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -78,10 +77,10 @@ class _MemberFormState extends State<MemberForm> {
 
     final helpText = widget.isImport
         ? 'Brings in a member from another system as Paused. '
-            'They become Active when you assign a membership.'
+              'They become Active when you assign a membership.'
         : 'Creates a new lead with no past history. '
-            'They become Active when you assign a membership. '
-            'Use Import for members from another system.';
+              'They become Active when you assign a membership. '
+              'Use Import for members from another system.';
 
     final submitLabel = widget.isImport ? 'Import member' : 'Create member';
 
@@ -104,10 +103,7 @@ class _MemberFormState extends State<MemberForm> {
             controller: _firstNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'First name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'First name'),
             validator: (value) => Validators.required(value, 'First name'),
           ),
           const SizedBox(height: 16),
@@ -116,10 +112,7 @@ class _MemberFormState extends State<MemberForm> {
             controller: _lastNameController,
             textInputAction: TextInputAction.next,
             textCapitalization: TextCapitalization.words,
-            decoration: const InputDecoration(
-              labelText: 'Last name',
-              border: OutlineInputBorder(),
-            ),
+            decoration: const InputDecoration(labelText: 'Last name'),
             validator: (value) => Validators.required(value, 'Last name'),
           ),
           const SizedBox(height: 16),
@@ -133,7 +126,6 @@ class _MemberFormState extends State<MemberForm> {
             decoration: const InputDecoration(
               labelText: 'Email',
               hintText: 'Email or phone required',
-              border: OutlineInputBorder(),
             ),
             validator: (value) {
               final formatError = Validators.optionalEmail(value);
@@ -156,7 +148,6 @@ class _MemberFormState extends State<MemberForm> {
             decoration: const InputDecoration(
               labelText: 'Phone',
               hintText: 'Email or phone required',
-              border: OutlineInputBorder(),
             ),
             validator: (value) {
               final formatError = Validators.optionalPhone(value);

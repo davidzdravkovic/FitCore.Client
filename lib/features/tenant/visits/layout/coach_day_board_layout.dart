@@ -216,6 +216,9 @@ abstract final class CoachDayBoardLayout {
   }) {
     final viewport = math.max(0.0, viewportWidth - rulerWidth);
     if (laneCount <= 0) return minLaneWidth;
+    // On a narrow phone with one coach, fill the viewport instead of
+    // leaving a dead strip beside a 190px minimum lane.
+    if (laneCount == 1) return math.max(120.0, viewport);
     return math.max(minLaneWidth, viewport / laneCount);
   }
 

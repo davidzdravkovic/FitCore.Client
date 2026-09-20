@@ -1,6 +1,8 @@
 import 'package:fitcore_client/core/api/api_client.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/routing/platform_paths.dart';
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
+import 'package:fitcore_client/core/widgets/fit_auth_scaffold.dart';
 import 'package:fitcore_client/features/platform/auth/api/platform_auth_api.dart';
 import 'package:fitcore_client/features/platform/auth/models/platform_verify_request.dart';
 import 'package:flutter/material.dart';
@@ -61,12 +63,15 @@ class _PlatformVerifyPageState extends State<PlatformVerifyPage> {
       context.go(PlatformPaths.home);
     } on ApiException catch (e) {
       if (!mounted) return;
-      final expired = e.statusCode == 401 ||
+      final expired =
+          e.statusCode == 401 ||
           e.message.toLowerCase().contains('expired') ||
           e.message.toLowerCase().contains('invalid');
       setState(() {
         _isVerifying = false;
-        _errorTitle = expired ? 'Link expired or already used' : 'Sign-in failed';
+        _errorTitle = expired
+            ? 'Link expired or already used'
+            : 'Sign-in failed';
         _errorBody = expired
             ? 'This magic link can only be used once. Go back to login to get a new email.'
             : e.message;
@@ -84,67 +89,73 @@ class _PlatformVerifyPageState extends State<PlatformVerifyPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final t = context.fc;
 
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 400),
-              child: _isVerifying
-                  ? Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const CircularProgressIndicator(),
-                        const SizedBox(height: 24),
-                        Text(
-                          'Signing you in…',
-                          style: theme.textTheme.titleMedium,
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    )
-                  : Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Icon(
-                          Icons.link_off,
-                          size: 48,
-                          color: colorScheme.error,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _errorTitle ?? 'Unable to sign in',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colorScheme.error,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          _errorBody ?? 'Request a new sign-in link.',
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 28),
-                        FilledButton(
-                          onPressed: () => context.go(PlatformPaths.login),
-                          style: FilledButton.styleFrom(
-                            minimumSize: const Size.fromHeight(48),
-                          ),
-                          child: const Text('Back to login'),
-                        ),
-                      ],
-                    ),
+    if (_isVerifying) {
+      return Scaffold(
+        backgroundColor: t.canvas,
+        body: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+                const SizedBox(height: FitCoreSpace.x5),
+                Text(
+                  'Signing you in…',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: t.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ),
+      );
+    }
+
+    return FitAuthScaffold(
+      title: _errorTitle ?? 'Unable to sign in',
+      subtitle: _errorBody ?? 'Request a new sign-in link.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(FitCoreSpace.x3),
+            decoration: BoxDecoration(
+              color: t.stateNegative.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(FitCoreRadius.md),
+              border: Border.all(
+                color: t.stateNegative.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.link_off, size: 18, color: t.stateNegative),
+                const SizedBox(width: FitCoreSpace.x3),
+                Expanded(
+                  child: Text(
+                    'This link can no longer be used.',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: t.stateNegative,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: FitCoreSpace.x5),
+          FitAuthSubmitButton(
+            label: 'Back to login',
+            isSubmitting: false,
+            onPressed: () => context.go(PlatformPaths.login),
+          ),
+        ],
       ),
     );
   }

@@ -1,16 +1,10 @@
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
 import 'package:flutter/material.dart';
 
 /// Shared presentation rules for visits so the board, the coach calendar and
 /// the legend can never drift apart.
-enum VisitTone {
-  scheduled,
-  completed,
-  noShow,
-  cancelled,
-  voided,
-  unknown,
-}
+enum VisitTone { scheduled, completed, noShow, cancelled, voided, unknown }
 
 const visitStatusOrder = <VisitTone>[
   VisitTone.scheduled,
@@ -33,22 +27,24 @@ VisitTone visitToneOf(String status) {
 
 extension VisitToneStyle on VisitTone {
   String get label => switch (this) {
-        VisitTone.scheduled => 'Scheduled',
-        VisitTone.completed => 'Completed',
-        VisitTone.noShow => 'No-show',
-        VisitTone.cancelled => 'Cancelled',
-        VisitTone.voided => 'Voided',
-        VisitTone.unknown => 'Other',
-      };
+    VisitTone.scheduled => 'Scheduled',
+    VisitTone.completed => 'Completed',
+    VisitTone.noShow => 'No-show',
+    VisitTone.cancelled => 'Cancelled',
+    VisitTone.voided => 'Voided',
+    VisitTone.unknown => 'Other',
+  };
 
+  /// Status palette lives in the design tokens so the board, the coach
+  /// calendar and the legend all read the same values.
   Color get color => switch (this) {
-        VisitTone.scheduled => const Color(0xFF4C8DFF),
-        VisitTone.completed => const Color(0xFF3BB273),
-        VisitTone.noShow => const Color(0xFF9B6BD8),
-        VisitTone.cancelled => const Color(0xFFE2624F),
-        VisitTone.voided => const Color(0xFF8A94A6),
-        VisitTone.unknown => const Color(0xFF6C7689),
-      };
+    VisitTone.scheduled => FitCoreTokens.dark.visitScheduled,
+    VisitTone.completed => FitCoreTokens.dark.visitCompleted,
+    VisitTone.noShow => FitCoreTokens.dark.visitNoShow,
+    VisitTone.cancelled => FitCoreTokens.dark.visitCancelled,
+    VisitTone.voided => FitCoreTokens.dark.visitVoided,
+    VisitTone.unknown => FitCoreTokens.dark.stateNeutral,
+  };
 
   /// Resolved-away visits stay readable but visibly retired.
   bool get isRetired => this == VisitTone.cancelled || this == VisitTone.voided;
@@ -80,7 +76,7 @@ String formatHourLabel(int hour) {
   return '$display $suffix';
 }
 
-String formatDayHeadline(DateTime day) {
+String formatDayHeadline(DateTime day, {bool compact = false}) {
   const weekdays = [
     'Monday',
     'Tuesday',
@@ -104,6 +100,24 @@ String formatDayHeadline(DateTime day) {
     'November',
     'December',
   ];
+  const shortWeekdays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const shortMonths = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
+  if (compact) {
+    return '${shortWeekdays[day.weekday - 1]} ${day.day} ${shortMonths[day.month - 1]}';
+  }
   return '${weekdays[day.weekday - 1]}, ${day.day} ${months[day.month - 1]} ${day.year}';
 }
 

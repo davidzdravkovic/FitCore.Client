@@ -1,6 +1,9 @@
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
-import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
 import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
+import 'package:fitcore_client/features/tenant/visits/layout/coach_day_board_layout.dart';
 import 'package:fitcore_client/features/tenant/visits/models/visit_resolve_outcome.dart';
 import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
 import 'package:fitcore_client/features/tenant/visits/models/void_visit_request.dart';
@@ -70,10 +73,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
     super.dispose();
   }
 
-  Future<void> _openCreateForm({
-    StaffResponse? coach,
-    DateTime? start,
-  }) async {
+  Future<void> _openCreateForm({StaffResponse? coach, DateTime? start}) async {
     final created = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -116,10 +116,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
     }
   }
 
-  Future<void> _openRecordForm({
-    StaffResponse? coach,
-    DateTime? start,
-  }) async {
+  Future<void> _openRecordForm({StaffResponse? coach, DateTime? start}) async {
     final recorded = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
@@ -264,9 +261,8 @@ class _VisitsPanelState extends State<VisitsPanel> {
                 '${formatLocalDateTime(visit.startAt)} – '
                 '${formatClock(visit.endAt)} · ${visit.coachName}',
                 style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-                      color:
-                          Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
             ListTile(
@@ -357,7 +353,6 @@ class _VisitsPanelState extends State<VisitsPanel> {
                     maxLines: 3,
                     decoration: const InputDecoration(
                       labelText: 'Note (optional)',
-                      border: OutlineInputBorder(),
                     ),
                   ),
                 ],
@@ -388,9 +383,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            error ?? 'Voided visit for ${visit.memberName}',
-          ),
+          content: Text(error ?? 'Voided visit for ${visit.memberName}'),
         ),
       );
     } finally {
@@ -398,62 +391,248 @@ class _VisitsPanelState extends State<VisitsPanel> {
     }
   }
 
+  Future<void> _pickDay() async {
+    final now = TenantClock.now();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _day,
+      firstDate: now.subtract(const Duration(days: 365)),
+      lastDate: now.add(const Duration(days: 365)),
+    );
+    if (picked == null) return;
+    await _onBoardDayChanged(DateTime(picked.year, picked.month, picked.day));
+  }
+
+  void _shiftDay(int days) {
+    final next = _day.add(Duration(days: days));
+    _onBoardDayChanged(DateTime(next.year, next.month, next.day));
+  }
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final phone = width < FitCoreBreakpoints.compact;
+    final pad = phone ? FitCoreSpace.x3 : FitCoreSpace.x4;
+    final showDayNav = _focusedCoach == null;
+
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final theme = Theme.of(context);
-
-        return Padding(
-          padding: const EdgeInsets.all(DashboardLayout.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: _buildStatusLegend(theme)),
-                  const SizedBox(width: 12),
-                  OutlinedButton.icon(
-                    onPressed: _openRecordForm,
-                    icon: const Icon(Icons.history),
-                    label: const Text('Record past visit'),
-                  ),
-                  const SizedBox(width: 12),
-                  FilledButton.icon(
-                    onPressed: () => _openCreateForm(),
-                    icon: const Icon(Icons.add),
-                    label: const Text('Schedule visit'),
-                  ),
-                ],
+        // One calendar toolbar: day nav + primary actions (Google Calendar style).
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                pad,
+                FitCoreSpace.x2,
+                pad,
+                FitCoreSpace.x2,
               ),
-              const SizedBox(height: 16),
-              Expanded(child: _buildBody(theme)),
-            ],
-          ),
+              child: _buildCommandBar(
+                context,
+                phone: phone,
+                showDayNav: showDayNav,
+              ),
+            ),
+            Expanded(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(pad, 0, pad, pad),
+                child: _buildBody(),
+              ),
+            ),
+          ],
         );
       },
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildCommandBar(
+    BuildContext context, {
+    required bool phone,
+    required bool showDayNav,
+  }) {
+    final theme = Theme.of(context);
+    final t = context.fc;
+    final isToday = isSameDay(_day, TenantClock.now());
+    final dayVisitCount = CoachDayBoardLayout.visitsForDay(
+      visits: _controller.visits,
+      day: _day,
+    ).length;
+
+    final schedule = FilledButton.icon(
+      onPressed: () => _openCreateForm(),
+      icon: const Icon(Icons.add, size: 16),
+      label: Text(phone ? 'Schedule' : 'Schedule visit'),
+    );
+
+    final record = phone
+        ? IconButton(
+            onPressed: _openRecordForm,
+            icon: const Icon(Icons.history, size: 18),
+            tooltip: 'Record past visit',
+          )
+        : TextButton.icon(
+            onPressed: _openRecordForm,
+            icon: const Icon(Icons.history, size: 16),
+            label: const Text('Record past visit'),
+          );
+
+    if (!showDayNav) {
+      return Row(
+        children: [
+          const Spacer(),
+          record,
+          const SizedBox(width: FitCoreSpace.x2),
+          schedule,
+        ],
+      );
+    }
+
+    final stepper = Container(
+      decoration: BoxDecoration(
+        color: t.panel,
+        borderRadius: BorderRadius.circular(FitCoreRadius.md),
+        border: Border.all(color: t.borderDefault),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: IconButton(
+              onPressed: () => _shiftDay(-1),
+              tooltip: 'Previous day',
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.chevron_left),
+            ),
+          ),
+          Container(width: 1, height: 22, color: t.borderSubtle),
+          SizedBox(
+            width: 36,
+            height: 36,
+            child: IconButton(
+              onPressed: () => _shiftDay(1),
+              tooltip: 'Next day',
+              padding: EdgeInsets.zero,
+              iconSize: 18,
+              icon: const Icon(Icons.chevron_right),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final today = phone
+        ? IconButton(
+            onPressed: isToday
+                ? null
+                : () {
+                    final now = TenantClock.now();
+                    _onBoardDayChanged(DateTime(now.year, now.month, now.day));
+                  },
+            icon: const Icon(Icons.today_outlined, size: 18),
+            tooltip: 'Today',
+            visualDensity: VisualDensity.compact,
+          )
+        : OutlinedButton(
+            onPressed: isToday
+                ? null
+                : () {
+                    final now = TenantClock.now();
+                    _onBoardDayChanged(DateTime(now.year, now.month, now.day));
+                  },
+            child: const Text('Today'),
+          );
+
+    final dayPicker = InkWell(
+      onTap: _pickDay,
+      borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: FitCoreSpace.x2,
+          vertical: FitCoreSpace.x2,
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              formatDayHeadline(_day, compact: phone),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.titleSmall,
+            ),
+            const SizedBox(width: FitCoreSpace.x1),
+            Icon(Icons.expand_more, size: 18, color: t.textSecondary),
+          ],
+        ),
+      ),
+    );
+
+    final count = FitCountBadge(
+      count: dayVisitCount,
+      noun: phone ? null : (dayVisitCount == 1 ? 'visit' : 'visits'),
+    );
+
+    if (phone) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              stepper,
+              const SizedBox(width: FitCoreSpace.x2),
+              Expanded(child: dayPicker),
+              today,
+              count,
+            ],
+          ),
+          const SizedBox(height: FitCoreSpace.x2),
+          Row(
+            children: [
+              record,
+              const Spacer(),
+              schedule,
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: [
+        stepper,
+        const SizedBox(width: FitCoreSpace.x2),
+        today,
+        const SizedBox(width: FitCoreSpace.x2),
+        dayPicker,
+        const SizedBox(width: FitCoreSpace.x2),
+        count,
+        const Spacer(),
+        record,
+        const SizedBox(width: FitCoreSpace.x2),
+        schedule,
+      ],
+    );
+  }
+
+  Widget _buildBody() {
     if (_controller.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
     }
 
     if (_controller.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_controller.error!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () => _controller.load(day: _day),
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return FitErrorState(
+        message: _controller.error!,
+        onRetry: () => _controller.load(day: _day),
       );
     }
 
@@ -478,37 +657,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
       onVisitTap: _onVisitTap,
       onCoachTap: (selected) => setState(() => _focusedCoach = selected),
       onSlotTap: _onSlotTap,
-    );
-  }
-
-  Widget _buildStatusLegend(ThemeData theme) {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        for (final tone in visitStatusOrder)
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 11,
-                height: 11,
-                decoration: BoxDecoration(
-                  color: tone.color,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                tone.label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-      ],
+      showToolbar: false,
     );
   }
 }

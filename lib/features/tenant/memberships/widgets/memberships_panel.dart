@@ -1,4 +1,8 @@
-import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
+import 'package:fitcore_client/core/widgets/fit_data_panel.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
+import 'package:fitcore_client/core/widgets/fit_record_table.dart';
+import 'package:fitcore_client/core/widgets/fit_status_chip.dart';
 import 'package:fitcore_client/features/tenant/memberships/memberships_controller.dart';
 import 'package:fitcore_client/features/tenant/memberships/models/cancel_membership_request.dart';
 import 'package:fitcore_client/features/tenant/memberships/models/membership_cancel_reason.dart';
@@ -104,10 +108,7 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
                         expandedInsets: EdgeInsets.zero,
                         dropdownMenuEntries: [
                           for (final value in MembershipCancelReason.values)
-                            DropdownMenuEntry(
-                              value: value,
-                              label: value.label,
-                            ),
+                            DropdownMenuEntry(value: value, label: value.label),
                         ],
                         onSelected: (value) {
                           if (value == null) return;
@@ -121,7 +122,6 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
                         maxLines: 3,
                         decoration: const InputDecoration(
                           labelText: 'Note (optional)',
-                          border: OutlineInputBorder(),
                         ),
                       ),
                     ],
@@ -188,98 +188,108 @@ class _MembershipsPanelState extends State<MembershipsPanel> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final theme = Theme.of(context);
+        final memberships = _controller.memberships;
 
-        return Padding(
-          padding: const EdgeInsets.all(DashboardLayout.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: FilledButton.icon(
-                  onPressed: _openAssignForm,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Assign'),
-                ),
+        return FitPageBody(
+          header: FitPageHeader(
+            title: 'Memberships',
+            description: 'Plans assigned to members and what is left on them.',
+            meta: memberships.isNotEmpty
+                ? FitCountBadge(count: memberships.length, noun: 'total')
+                : null,
+            actions: [
+              FilledButton.icon(
+                onPressed: _openAssignForm,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Assign'),
               ),
-              const SizedBox(height: 24),
-              Expanded(child: _buildBody(theme)),
             ],
           ),
+          child: FitDataPanel(child: _buildBody()),
         );
       },
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody() {
     if (_controller.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const FitTableSkeleton(columnFlex: [3, 3, 2, 2, 3]);
     }
 
     if (_controller.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_controller.error!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _controller.load,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return FitErrorState(
+        message: _controller.error!,
+        onRetry: _controller.load,
       );
     }
 
     if (_controller.memberships.isEmpty) {
-      return Center(
-        child: Text(
-          'No memberships yet. Assign a plan to a member to get started.',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
+      return FitEmptyState(
+        icon: Icons.card_membership_outlined,
+        title: 'No memberships yet',
+        message: 'Assign a plan to a member to get started.',
+        action: FilledButton.icon(
+          onPressed: _openAssignForm,
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Assign'),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Member')),
-            DataColumn(label: Text('Plan')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Start')),
-            DataColumn(label: Text('Entitlement')),
-            DataColumn(label: Text('')),
-          ],
-          rows: [
-            for (final membership in _controller.memberships)
-              DataRow(
-                cells: [
-                  DataCell(Text(membership.memberName)),
-                  DataCell(Text(membership.planName)),
-                  DataCell(Text(membership.status)),
-                  DataCell(Text(_formatDate(membership.startAt))),
-                  DataCell(Text(_entitlementCell(membership))),
-                  DataCell(
-                    membership.isCancellable
-                        ? IconButton(
-                            tooltip: 'Cancel membership',
-                            onPressed: () => _cancelMembership(membership),
-                            icon: const Icon(Icons.cancel_outlined),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
-              ),
-          ],
+    return FitRecordTable(
+      columns: const [
+        FitColumn(label: 'Member', flex: 3, minWidth: 170),
+        FitColumn(label: 'Plan', flex: 3, minWidth: 160),
+        FitColumn(label: 'Status', flex: 2, minWidth: 130),
+        FitColumn(label: 'Start', flex: 2, minWidth: 110, hideBelow: 1040),
+        FitColumn(
+          label: 'Entitlement',
+          flex: 3,
+          minWidth: 220,
+          hideBelow: 1180,
         ),
-      ),
+      ],
+      rows: [
+        for (final membership in _controller.memberships)
+          FitRecordRow(
+            leading: FitAvatar(name: membership.memberName),
+            cells: [
+              FitTextCell(membership.memberName, strong: true),
+              FitTextCell(membership.planName),
+              FitStatusChip(
+                label: membership.status,
+                tone: _statusTone(membership.status),
+              ),
+              FitTextCell(
+                _formatDate(membership.startAt),
+                muted: true,
+                mono: true,
+              ),
+              FitTextCell(_entitlementCell(membership), muted: true),
+            ],
+            actions: [
+              if (membership.isCancellable)
+                FitRowAction(
+                  icon: Icons.cancel_outlined,
+                  tooltip: 'Cancel membership',
+                  danger: true,
+                  onPressed: () => _cancelMembership(membership),
+                ),
+            ],
+          ),
+      ],
     );
+  }
+
+  /// Visual weight for the status string the API already returns.
+  FitTone _statusTone(String status) {
+    return switch (status.trim().toLowerCase()) {
+      'active' => FitTone.positive,
+      'paused' => FitTone.warning,
+      'pending' => FitTone.caution,
+      'cancelled' => FitTone.negative,
+      'expired' || 'completed' => FitTone.muted,
+      _ => FitTone.neutral,
+    };
   }
 }

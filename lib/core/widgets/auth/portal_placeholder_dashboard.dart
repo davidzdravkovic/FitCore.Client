@@ -1,3 +1,5 @@
+import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
 import 'package:flutter/material.dart';
 
 /// Empty portal home used until staff/member features land.
@@ -19,51 +21,31 @@ class PortalPlaceholderDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = context.fc;
     final name = firstName?.trim();
 
     return Scaffold(
+      backgroundColor: t.canvas,
       appBar: AppBar(
+        backgroundColor: t.canvas,
         title: Text(title),
+        shape: Border(bottom: BorderSide(color: t.borderSubtle)),
         actions: [
           TextButton(
             onPressed: onSignOut,
+            style: TextButton.styleFrom(foregroundColor: t.textSecondary),
             child: const Text('Sign out'),
           ),
+          const SizedBox(width: FitCoreSpace.x2),
         ],
       ),
       body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 48,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  (name != null && name.isNotEmpty)
-                      ? 'Welcome, $name'
-                      : 'Welcome',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  body,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyLarge?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
+        child: FitEmptyState(
+          icon: icon,
+          title: (name != null && name.isNotEmpty)
+              ? 'Welcome, $name'
+              : 'Welcome',
+          message: body,
         ),
       ),
     );

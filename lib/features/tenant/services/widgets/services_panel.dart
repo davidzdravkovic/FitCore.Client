@@ -1,4 +1,8 @@
-import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
+import 'package:fitcore_client/core/widgets/fit_data_panel.dart';
+import 'package:fitcore_client/core/widgets/fit_page_header.dart';
+import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
+import 'package:fitcore_client/core/widgets/fit_record_table.dart';
+import 'package:fitcore_client/core/widgets/fit_status_chip.dart';
 import 'package:fitcore_client/features/tenant/services/models/service_response.dart';
 import 'package:fitcore_client/features/tenant/services/services_controller.dart';
 import 'package:fitcore_client/features/tenant/services/widgets/service_form.dart';
@@ -95,9 +99,7 @@ class _ServicesPanelState extends State<ServicesPanel> {
     final error = await _controller.deactivate(service);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(error ?? '${service.name} deactivated'),
-      ),
+      SnackBar(content: Text(error ?? '${service.name} deactivated')),
     );
   }
 
@@ -106,98 +108,84 @@ class _ServicesPanelState extends State<ServicesPanel> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        final theme = Theme.of(context);
+        final services = _controller.services;
 
-        return Padding(
-          padding: const EdgeInsets.all(DashboardLayout.pagePadding),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: FilledButton.icon(
-                  onPressed: _openCreateForm,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add service'),
-                ),
+        return FitPageBody(
+          header: FitPageHeader(
+            title: 'Services',
+            description: 'What your gym offers. Plans are built on services.',
+            meta: services.isNotEmpty
+                ? FitCountBadge(count: services.length, noun: 'total')
+                : null,
+            actions: [
+              FilledButton.icon(
+                onPressed: _openCreateForm,
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text('Add service'),
               ),
-              const SizedBox(height: 24),
-              Expanded(child: _buildBody(theme)),
             ],
           ),
+          child: FitDataPanel(child: _buildBody()),
         );
       },
     );
   }
 
-  Widget _buildBody(ThemeData theme) {
+  Widget _buildBody() {
     if (_controller.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const FitTableSkeleton(columnFlex: [3, 4, 2]);
     }
 
     if (_controller.error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_controller.error!, textAlign: TextAlign.center),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: _controller.load,
-              child: const Text('Retry'),
-            ),
-          ],
-        ),
+      return FitErrorState(
+        message: _controller.error!,
+        onRetry: _controller.load,
       );
     }
 
     if (_controller.services.isEmpty) {
-      return Center(
-        child: Text(
-          'No services yet. Add a service (e.g. Gym access, PT) to sell plans.',
-          style: theme.textTheme.bodyLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          textAlign: TextAlign.center,
+      return FitEmptyState(
+        icon: Icons.fitness_center_outlined,
+        title: 'No services yet',
+        message: 'Add a service (e.g. Gym access, PT) to sell plans.',
+        action: FilledButton.icon(
+          onPressed: _openCreateForm,
+          icon: const Icon(Icons.add, size: 16),
+          label: const Text('Add service'),
         ),
       );
     }
 
-    return SingleChildScrollView(
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Name')),
-            DataColumn(label: Text('Description')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('')),
-          ],
-          rows: [
-            for (final service in _controller.services)
-              DataRow(
-                cells: [
-                  DataCell(Text(service.name)),
-                  DataCell(Text(
-                    service.description?.isNotEmpty == true
-                        ? service.description!
-                        : '—',
-                  )),
-                  DataCell(Text(service.isActive ? 'Active' : 'Inactive')),
-                  DataCell(
-                    service.isActive
-                        ? IconButton(
-                            tooltip: 'Deactivate',
-                            onPressed: () => _deactivate(service),
-                            icon: const Icon(Icons.block_outlined),
-                          )
-                        : const SizedBox.shrink(),
-                  ),
-                ],
+    return FitRecordTable(
+      columns: const [
+        FitColumn(label: 'Name', flex: 3, minWidth: 180),
+        FitColumn(label: 'Description', flex: 4, minWidth: 220, hideBelow: 900),
+        FitColumn(label: 'Status', flex: 2, minWidth: 130),
+      ],
+      rows: [
+        for (final service in _controller.services)
+          FitRecordRow(
+            cells: [
+              FitTextCell(service.name, strong: true),
+              if (service.description?.isNotEmpty == true)
+                FitTextCell(service.description!, muted: true)
+              else
+                const FitTextCell.empty(),
+              FitStatusChip(
+                label: service.isActive ? 'Active' : 'Inactive',
+                tone: service.isActive ? FitTone.positive : FitTone.muted,
               ),
-          ],
-        ),
-      ),
+            ],
+            actions: [
+              if (service.isActive)
+                FitRowAction(
+                  icon: Icons.block_outlined,
+                  tooltip: 'Deactivate',
+                  onPressed: () => _deactivate(service),
+                ),
+            ],
+          ),
+      ],
     );
   }
 }
