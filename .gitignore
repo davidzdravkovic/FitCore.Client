@@ -53,3 +53,7 @@ app.*.map.json
 # Agent / Cursor local rails (not committed)
 AGENTS.md
 .cursor/
+
+# Agent alternate build / analyze leftovers
+.build*/
+analyze*.txt

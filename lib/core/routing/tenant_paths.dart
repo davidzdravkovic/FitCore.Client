@@ -9,7 +9,6 @@ abstract final class TenantPaths {
   static const plans = '/tenant/plans';
   static const memberships = '/tenant/memberships';
   static const schedule = '/tenant/schedule';
-  static const checkIns = '/tenant/check-ins';
   static const staff = '/tenant/staff';
   static const billing = '/tenant/billing';
   static const settings = '/tenant/settings';

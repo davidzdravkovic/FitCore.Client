@@ -1,33 +1,3 @@
-class LoginStaffRequest {
-  const LoginStaffRequest({
-    required this.email,
-    required this.password,
-  });
-
-  final String email;
-  final String password;
-
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-      };
-}
-
-class ActivateStaffRequest {
-  const ActivateStaffRequest({
-    required this.token,
-    required this.password,
-  });
-
-  final String token;
-  final String password;
-
-  Map<String, dynamic> toJson() => {
-        'token': token,
-        'password': password,
-      };
-}
-
 class StaffSessionResponse {
   const StaffSessionResponse({
     required this.message,

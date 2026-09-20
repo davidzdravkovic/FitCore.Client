@@ -1,11 +1,12 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_status.dart';
 import 'package:fitcore_client/features/tenant/memberships/api/memberships_api.dart';
-import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
 import 'package:fitcore_client/features/tenant/visits/api/visits_api.dart';
-import 'package:fitcore_client/features/tenant/visits/models/visits_models.dart';
+import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
 import 'package:fitcore_client/features/tenant/visits/visit_calendar_range.dart';
 import 'package:flutter/foundation.dart';
 

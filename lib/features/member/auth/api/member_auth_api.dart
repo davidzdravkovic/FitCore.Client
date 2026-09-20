@@ -1,5 +1,7 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/member/auth/models/member_auth_models.dart';
+import 'package:fitcore_client/features/member/auth/models/activate_member_request.dart';
+import 'package:fitcore_client/features/member/auth/models/login_member_request.dart';
+import 'package:fitcore_client/features/member/auth/models/member_session_response.dart';
 
 class MemberAuthApi {
   MemberAuthApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

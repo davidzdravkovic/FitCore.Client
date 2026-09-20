@@ -1,18 +1,3 @@
-enum MembershipCancelReason {
-  memberRequest,
-  adminDecision;
-
-  String get apiValue => switch (this) {
-        MembershipCancelReason.memberRequest => 'MemberRequest',
-        MembershipCancelReason.adminDecision => 'AdminDecision',
-      };
-
-  String get label => switch (this) {
-        MembershipCancelReason.memberRequest => 'Member requested',
-        MembershipCancelReason.adminDecision => 'Admin decision',
-      };
-}
-
 class MembershipResponse {
   const MembershipResponse({
     required this.id,
@@ -77,37 +62,4 @@ class MembershipResponse {
           : DateTime.tryParse(map['cancelledAt'] as String? ?? ''),
     );
   }
-}
-
-class AssignMembershipRequest {
-  const AssignMembershipRequest({
-    required this.memberId,
-    required this.planId,
-    this.startAt,
-  });
-
-  final String memberId;
-  final String planId;
-  final DateTime? startAt;
-
-  Map<String, dynamic> toJson() => {
-        'memberId': memberId,
-        'planId': planId,
-        if (startAt != null) 'startAt': startAt!.toUtc().toIso8601String(),
-      };
-}
-
-class CancelMembershipRequest {
-  const CancelMembershipRequest({
-    required this.reason,
-    this.note = '',
-  });
-
-  final MembershipCancelReason reason;
-  final String note;
-
-  Map<String, dynamic> toJson() => {
-        'reason': reason.apiValue,
-        if (note.trim().isNotEmpty) 'note': note.trim(),
-      };
 }

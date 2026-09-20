@@ -1,7 +1,8 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/services/api/services_api.dart';
-import 'package:fitcore_client/features/tenant/services/models/services_models.dart';
+import 'package:fitcore_client/features/tenant/services/models/create_service_request.dart';
+import 'package:fitcore_client/features/tenant/services/models/service_response.dart';
 import 'package:flutter/material.dart';
 
 class ServiceForm extends StatefulWidget {

@@ -18,7 +18,7 @@ class MemberDashboardPage extends StatelessWidget {
       icon: Icons.person_outline,
       body:
           'Your member area is empty for now. '
-          'Bookings, memberships, and check-ins will show up here.',
+          'Bookings and memberships will show up here.',
       onSignOut: () {
         ApiClient.instance.setAccessToken(null);
         MemberSession.clear();

@@ -18,7 +18,7 @@ class StaffDashboardPage extends StatelessWidget {
       icon: Icons.badge_outlined,
       body:
           'Your staff workspace is empty for now. '
-          'Schedule, check-ins, and rosters will show up here.',
+          'Schedule and rosters will show up here.',
       onSignOut: () {
         ApiClient.instance.setAccessToken(null);
         StaffSession.clear();

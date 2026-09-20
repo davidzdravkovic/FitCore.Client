@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 import 'package:flutter/foundation.dart';
 
 /// Feature orchestration: widgets stay thin; HTTP stays in [MembersApi].

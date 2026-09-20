@@ -6,7 +6,7 @@ import 'package:fitcore_client/core/time/time_zones.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/auth/tenant_session.dart';
 import 'package:fitcore_client/features/tenant/auth/registry/api/organizations_api.dart';
-import 'package:fitcore_client/features/tenant/auth/registry/models/organizations_models.dart';
+import 'package:fitcore_client/features/tenant/auth/registry/models/register_organization_request.dart';
 import 'package:fitcore_client/features/tenant/auth/registry/helpers/registry_input_decoration.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';

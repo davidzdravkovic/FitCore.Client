@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/auth/registry/models/organizations_models.dart';
+import 'package:fitcore_client/features/tenant/auth/registry/models/register_organization_request.dart';
+import 'package:fitcore_client/features/tenant/auth/registry/models/register_organization_response.dart';
 
 class OrganizationsApi {
   OrganizationsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

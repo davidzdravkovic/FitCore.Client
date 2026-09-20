@@ -1,8 +1,9 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:fitcore_client/features/tenant/visits/api/visits_api.dart';
-import 'package:fitcore_client/features/tenant/visits/models/visits_models.dart';
+import 'package:fitcore_client/features/tenant/visits/models/reschedule_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
 import 'package:fitcore_client/features/tenant/visits/widgets/visit_display.dart';
 import 'package:flutter/material.dart';
 

@@ -1,6 +1,8 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
 import 'package:fitcore_client/features/tenant/memberships/memberships_controller.dart';
-import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/cancel_membership_request.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_cancel_reason.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
 import 'package:fitcore_client/features/tenant/memberships/widgets/assign_membership_form.dart';
 import 'package:flutter/material.dart';
 

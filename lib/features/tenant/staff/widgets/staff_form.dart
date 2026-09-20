@@ -1,7 +1,8 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/staff/api/staff_api.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/create_staff_request.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:flutter/material.dart';
 
 class StaffForm extends StatefulWidget {

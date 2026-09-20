@@ -1,5 +1,10 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/visits/models/visits_models.dart';
+import 'package:fitcore_client/features/tenant/visits/models/create_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/record_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/reschedule_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/resolve_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
+import 'package:fitcore_client/features/tenant/visits/models/void_visit_request.dart';
 
 class VisitsApi {
   VisitsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

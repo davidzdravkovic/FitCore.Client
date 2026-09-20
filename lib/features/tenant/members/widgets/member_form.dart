@@ -1,7 +1,8 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/create_member_request.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 import 'package:flutter/material.dart';
 
 class MemberForm extends StatefulWidget {

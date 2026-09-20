@@ -1,5 +1,5 @@
 import 'package:fitcore_client/features/tenant/dashboard/helpers/dashboard_layout.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 import 'package:fitcore_client/features/tenant/members/members_controller.dart';
 import 'package:fitcore_client/features/tenant/members/widgets/member_form.dart';
 import 'package:flutter/material.dart';

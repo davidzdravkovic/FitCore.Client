@@ -1,8 +1,9 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 import 'package:fitcore_client/features/tenant/memberships/api/memberships_api.dart';
-import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
-import 'package:fitcore_client/features/tenant/plans/models/plans_models.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/assign_membership_request.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
+import 'package:fitcore_client/features/tenant/plans/models/plan_response.dart';
 import 'package:flutter/material.dart';
 
 class AssignMembershipForm extends StatefulWidget {

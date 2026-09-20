@@ -1,18 +1,3 @@
-class PlatformLoginRequest {
-  const PlatformLoginRequest({
-    required this.email,
-    required this.password,
-  });
-
-  final String email;
-  final String password;
-
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-      };
-}
-
 class PlatformLoginResponse {
   const PlatformLoginResponse({required this.message});
 

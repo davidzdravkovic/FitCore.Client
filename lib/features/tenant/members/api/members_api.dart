@@ -1,5 +1,7 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/members/models/members_models.dart';
+import 'package:fitcore_client/features/tenant/members/models/create_member_request.dart';
+import 'package:fitcore_client/features/tenant/members/models/invite_member_response.dart';
+import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 
 class MembersApi {
   MembersApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

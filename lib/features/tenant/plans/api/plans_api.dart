@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/plans/models/plans_models.dart';
+import 'package:fitcore_client/features/tenant/plans/models/create_plan_request.dart';
+import 'package:fitcore_client/features/tenant/plans/models/plan_response.dart';
 
 class PlansApi {
   PlansApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

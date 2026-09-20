@@ -1,5 +1,7 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/assign_membership_request.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/cancel_membership_request.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
 
 class MembershipsApi {
   MembershipsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

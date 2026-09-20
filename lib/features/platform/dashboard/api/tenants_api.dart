@@ -1,5 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/platform/dashboard/models/tenants_models.dart';
+import 'package:fitcore_client/features/platform/dashboard/models/tenant_response.dart';
 
 class TenantsApi {
   TenantsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

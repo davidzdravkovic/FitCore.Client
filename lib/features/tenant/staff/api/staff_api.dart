@@ -1,5 +1,7 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/create_staff_request.dart';
+import 'package:fitcore_client/features/tenant/staff/models/invite_staff_response.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 
 class StaffApi {
   StaffApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

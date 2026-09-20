@@ -1,5 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/member/auth/models/member_auth_models.dart';
+import 'package:fitcore_client/features/member/auth/models/login_member_request.dart';
 import 'package:fitcore_client/core/routing/member_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/password_login_form.dart';
 import 'package:fitcore_client/features/member/auth/api/member_auth_api.dart';

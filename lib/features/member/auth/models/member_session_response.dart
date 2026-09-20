@@ -1,33 +1,3 @@
-class LoginMemberRequest {
-  const LoginMemberRequest({
-    required this.email,
-    required this.password,
-  });
-
-  final String email;
-  final String password;
-
-  Map<String, dynamic> toJson() => {
-        'email': email,
-        'password': password,
-      };
-}
-
-class ActivateMemberRequest {
-  const ActivateMemberRequest({
-    required this.token,
-    required this.password,
-  });
-
-  final String token;
-  final String password;
-
-  Map<String, dynamic> toJson() => {
-        'token': token,
-        'password': password,
-      };
-}
-
 class MemberSessionResponse {
   const MemberSessionResponse({
     required this.message,

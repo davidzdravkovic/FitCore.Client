@@ -4,8 +4,8 @@ import 'package:fitcore_client/core/routing/platform_paths.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/platform/dashboard/api/invitations_api.dart';
 import 'package:fitcore_client/features/platform/dashboard/api/tenants_api.dart';
-import 'package:fitcore_client/features/platform/dashboard/models/invitations_models.dart';
-import 'package:fitcore_client/features/platform/dashboard/models/tenants_models.dart';
+import 'package:fitcore_client/features/platform/dashboard/models/create_invite_request.dart';
+import 'package:fitcore_client/features/platform/dashboard/models/tenant_response.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

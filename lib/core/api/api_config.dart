@@ -1,4 +1,10 @@
+import 'package:flutter/foundation.dart';
+
 class ApiConfig {
-  /// Local FitCore.Api (launchSettings http profile).
-  static const String baseUrl = 'http://localhost:5145';
+  /// Local debug: FitCore.Api launchSettings http profile.
+  /// Release/profile web: same origin as the SPA (nginx `/api` → fitcore-api).
+  static String get baseUrl {
+    if (kIsWeb && !kDebugMode) return Uri.base.origin;
+    return 'http://localhost:5145';
+  }
 }

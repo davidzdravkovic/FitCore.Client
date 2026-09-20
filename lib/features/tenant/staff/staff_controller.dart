@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/staff/api/staff_api.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:flutter/foundation.dart';
 
 /// Feature orchestration: widgets stay thin; HTTP stays in [StaffApi].

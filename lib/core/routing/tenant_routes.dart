@@ -61,15 +61,6 @@ final List<RouteBase> tenantRoutes = [
         builder: (context, state) => const VisitsPanel(),
       ),
       GoRoute(
-        path: TenantPaths.checkIns,
-        builder: (context, state) => const DashboardPlaceholderPanel(
-          title: 'Check-ins',
-          description:
-              'Front-desk and QR check-ins will be tracked in this workspace.',
-          icon: Icons.qr_code_scanner_outlined,
-        ),
-      ),
-      GoRoute(
         path: TenantPaths.staff,
         builder: (context, state) => const StaffPanel(),
       ),

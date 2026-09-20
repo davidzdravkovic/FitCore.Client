@@ -1,5 +1,6 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/tenant/services/models/services_models.dart';
+import 'package:fitcore_client/features/tenant/services/models/create_service_request.dart';
+import 'package:fitcore_client/features/tenant/services/models/service_response.dart';
 
 class ServicesApi {
   ServicesApi({ApiClient? client}) : _client = client ?? ApiClient.instance;

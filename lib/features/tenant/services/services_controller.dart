@@ -1,6 +1,6 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/features/tenant/services/api/services_api.dart';
-import 'package:fitcore_client/features/tenant/services/models/services_models.dart';
+import 'package:fitcore_client/features/tenant/services/models/service_response.dart';
 import 'package:flutter/foundation.dart';
 
 class ServicesController extends ChangeNotifier {

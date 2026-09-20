@@ -4,7 +4,7 @@ import 'package:fitcore_client/core/routing/tenant_paths.dart';
 import 'package:fitcore_client/core/validation/validators.dart';
 import 'package:fitcore_client/features/tenant/auth/tenant_session.dart';
 import 'package:fitcore_client/features/tenant/auth/login/api/tenant_auth_api.dart';
-import 'package:fitcore_client/features/tenant/auth/login/models/tenant_login_models.dart';
+import 'package:fitcore_client/features/tenant/auth/login/models/login_organization_request.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

@@ -1,5 +1,5 @@
 import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/features/staff/auth/models/staff_auth_models.dart';
+import 'package:fitcore_client/features/staff/auth/models/login_staff_request.dart';
 import 'package:fitcore_client/core/routing/staff_paths.dart';
 import 'package:fitcore_client/core/widgets/auth/password_login_form.dart';
 import 'package:fitcore_client/features/staff/auth/api/staff_auth_api.dart';

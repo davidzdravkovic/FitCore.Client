@@ -1,8 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:fitcore_client/core/time/tenant_clock.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
-import 'package:fitcore_client/features/tenant/visits/models/visits_models.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
+import 'package:fitcore_client/features/tenant/visits/layout/coach_day_board_layout.dart';
+import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
 import 'package:fitcore_client/features/tenant/visits/widgets/visit_display.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,7 @@ import 'package:flutter/material.dart';
 ///
 /// Syncfusion only renders resources as timeline rows, so the column layout
 /// every booking tool uses (Google resource time-grid, Mindbody day view) is
-/// built here directly.
+/// built here directly. Layout math lives in [CoachDayBoardLayout].
 class CoachDayBoard extends StatefulWidget {
   const CoachDayBoard({
     super.key,
@@ -35,11 +36,6 @@ class CoachDayBoard extends StatefulWidget {
   @override
   State<CoachDayBoard> createState() => _CoachDayBoardState();
 }
-
-const double _rulerWidth = 68;
-const double _headerHeight = 64;
-const double _hourHeight = 76;
-const double _minLaneWidth = 190;
 
 class _CoachDayBoardState extends State<CoachDayBoard> {
   final ScrollController _headerScroll = ScrollController();
@@ -78,50 +74,6 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     _syncing = false;
   }
 
-  List<VisitResponse> get _dayVisits {
-    final visits = widget.visits
-        .where((visit) => isSameDay(TenantClock.toTenant(visit.startAt), widget.day))
-        .toList();
-    visits.sort((a, b) => a.startAt.compareTo(b.startAt));
-    return visits;
-  }
-
-  List<_Lane> _lanes(List<VisitResponse> dayVisits) {
-    final lanes = [
-      for (final person in widget.staff)
-        _Lane(
-          id: person.id,
-          name: '${person.firstName} ${person.lastName}'.trim(),
-          staff: person,
-        ),
-    ];
-
-    final known = {for (final lane in lanes) lane.id};
-    final orphaned =
-        dayVisits.where((visit) => !known.contains(visit.coachStaffId));
-    if (orphaned.isNotEmpty) {
-      lanes.add(const _Lane(id: '', name: 'Unassigned'));
-    }
-
-    return lanes;
-  }
-
-  (int, int) _hourWindow(List<VisitResponse> dayVisits) {
-    var first = 7;
-    var last = 21;
-
-    for (final visit in dayVisits) {
-      final start = TenantClock.toTenant(visit.startAt);
-      final end = TenantClock.toTenant(visit.endAt);
-      first = math.min(first, start.hour);
-      last = math.max(last, end.minute > 0 ? end.hour + 1 : end.hour);
-    }
-
-    first = first.clamp(0, 22);
-    last = last.clamp(first + 1, 24);
-    return (first, last);
-  }
-
   void _restoreScrollOnce(int firstHour, List<VisitResponse> dayVisits) {
     if (_restoredScroll) return;
     _restoredScroll = true;
@@ -131,7 +83,8 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       final anchor = dayVisits.isEmpty
           ? 8.0
           : TenantClock.toTenant(dayVisits.first.startAt).hour.toDouble();
-      final target = (anchor - firstHour - 0.5) * _hourHeight;
+      final target =
+          (anchor - firstHour - 0.5) * CoachDayBoardMetrics.hourHeight;
       _verticalScroll.jumpTo(
         target.clamp(0.0, _verticalScroll.position.maxScrollExtent),
       );
@@ -158,10 +111,17 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dayVisits = _dayVisits;
-    final lanes = _lanes(dayVisits);
-    final (firstHour, lastHour) = _hourWindow(dayVisits);
-    final gridHeight = (lastHour - firstHour) * _hourHeight;
+    final dayVisits = CoachDayBoardLayout.visitsForDay(
+      visits: widget.visits,
+      day: widget.day,
+    );
+    final lanes = CoachDayBoardLayout.lanes(
+      staff: widget.staff,
+      dayVisits: dayVisits,
+    );
+    final (firstHour, lastHour) = CoachDayBoardLayout.hourWindow(dayVisits);
+    final gridHeight =
+        (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
 
     _restoreScrollOnce(firstHour, dayVisits);
 
@@ -249,7 +209,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
   Widget _buildGrid(
     ThemeData theme,
-    List<_Lane> lanes,
+    List<CoachDayLane> lanes,
     List<VisitResponse> dayVisits,
     int firstHour,
     int lastHour,
@@ -259,9 +219,15 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final viewport = math.max(0.0, constraints.maxWidth - _rulerWidth);
-        final laneWidth = math.max(_minLaneWidth, viewport / lanes.length);
+        final laneWidth = CoachDayBoardLayout.laneWidth(
+          viewportWidth: constraints.maxWidth,
+          laneCount: lanes.length,
+        );
         final gridWidth = laneWidth * lanes.length;
+        final viewport = math.max(
+          0.0,
+          constraints.maxWidth - CoachDayBoardMetrics.rulerWidth,
+        );
         final overflowsHorizontally = gridWidth > viewport + 0.5;
 
         // Web/desktop: wheel is vertical-only by default; allow click-drag and
@@ -290,11 +256,11 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             child: Column(
               children: [
                 SizedBox(
-                  height: _headerHeight,
+                  height: CoachDayBoardMetrics.headerHeight,
                   child: Row(
                     children: [
                       SizedBox(
-                        width: _rulerWidth,
+                        width: CoachDayBoardMetrics.rulerWidth,
                         child: _headerCorner(theme),
                       ),
                       Expanded(
@@ -324,7 +290,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        width: _rulerWidth,
+                        width: CoachDayBoardMetrics.rulerWidth,
                         // No scrollbar here — one vertical thumb on the right only.
                         child: SingleChildScrollView(
                           controller: _rulerScroll,
@@ -412,14 +378,16 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
   Widget _buildLaneHeader(
     ThemeData theme,
-    _Lane lane,
+    CoachDayLane lane,
     double width,
     List<VisitResponse> dayVisits,
   ) {
-    final count = dayVisits
-        .where((visit) => _belongsTo(visit, lane, dayVisits))
-        .length;
-    final initials = _initialsOf(lane.name);
+    final count = CoachDayBoardLayout.visitsInLane(
+      dayVisits: dayVisits,
+      lane: lane,
+      staff: widget.staff,
+    ).length;
+    final initials = CoachDayBoardLayout.initialsOf(lane.name);
     final tappable = lane.staff != null;
 
     return SizedBox(
@@ -502,7 +470,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
         children: [
           for (var hour = firstHour; hour < lastHour; hour++)
             SizedBox(
-              height: _hourHeight,
+              height: CoachDayBoardMetrics.hourHeight,
               child: Align(
                 alignment: Alignment.topRight,
                 child: Padding(
@@ -523,17 +491,20 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
   Widget _buildLane(
     ThemeData theme,
-    _Lane lane,
+    CoachDayLane lane,
     List<VisitResponse> dayVisits,
     double width,
     int firstHour,
     int lastHour,
   ) {
-    final laneVisits = dayVisits
-        .where((visit) => _belongsTo(visit, lane, dayVisits))
-        .toList();
-    final placements = _placeOverlaps(laneVisits);
-    final gridHeight = (lastHour - firstHour) * _hourHeight;
+    final laneVisits = CoachDayBoardLayout.visitsInLane(
+      dayVisits: dayVisits,
+      lane: lane,
+      staff: widget.staff,
+    );
+    final placements = CoachDayBoardLayout.placeOverlaps(laneVisits);
+    final gridHeight =
+        (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
     final coach = lane.staff;
 
     return SizedBox(
@@ -545,7 +516,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             children: [
               for (var hour = firstHour; hour < lastHour; hour++)
                 SizedBox(
-                  height: _hourHeight,
+                  height: CoachDayBoardMetrics.hourHeight,
                   child: InkWell(
                     onTap: (coach == null || widget.onSlotTap == null)
                         ? null
@@ -581,28 +552,22 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
   Widget _buildVisitBlock(
     ThemeData theme,
-    _Placement placement,
+    CoachDayPlacement placement,
     double laneWidth,
     int firstHour,
   ) {
     final visit = placement.visit;
-    final start = TenantClock.toTenant(visit.startAt);
-    final end = TenantClock.toTenant(visit.endAt);
-
-    final startMinutes = (start.hour - firstHour) * 60 + start.minute;
-    final minutes = math.max(20, end.difference(start).inMinutes);
-    final top = startMinutes * _hourHeight / 60;
-    final height = minutes * _hourHeight / 60;
-
-    final usable = laneWidth - 8;
-    final slotWidth = usable / placement.columnCount;
-    final left = 4 + slotWidth * placement.column;
+    final geometry = CoachDayBoardLayout.visitGeometry(
+      placement: placement,
+      laneWidth: laneWidth,
+      firstHour: firstHour,
+    );
 
     return Positioned(
-      top: top + 2,
-      left: left,
-      width: slotWidth - 3,
-      height: math.max(24, height - 4),
+      top: geometry.top,
+      left: geometry.left,
+      width: geometry.width,
+      height: geometry.height,
       child: _VisitBlock(
         visit: visit,
         onTap: () => widget.onVisitTap(visit),
@@ -612,12 +577,12 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
   }
 
   List<Widget> _buildNowIndicator(ThemeData theme, int firstHour, int lastHour) {
-    final now = TenantClock.now();
-    if (!isSameDay(now, widget.day)) return const [];
-    if (now.hour < firstHour || now.hour >= lastHour) return const [];
-
-    final offset =
-        ((now.hour - firstHour) * 60 + now.minute) * _hourHeight / 60;
+    final offset = CoachDayBoardLayout.nowLineOffset(
+      day: widget.day,
+      firstHour: firstHour,
+      lastHour: lastHour,
+    );
+    if (offset == null) return const [];
 
     return [
       Positioned(
@@ -642,81 +607,6 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       ),
     ];
   }
-
-  /// Visits whose coach is gone from the staff list fall into the spare lane
-  /// instead of vanishing from the day.
-  bool _belongsTo(VisitResponse visit, _Lane lane, List<VisitResponse> dayVisits) {
-    if (lane.staff != null) return visit.coachStaffId == lane.id;
-    return !widget.staff.any((person) => person.id == visit.coachStaffId);
-  }
-
-  /// Side-by-side placement for visits that share a time range.
-  List<_Placement> _placeOverlaps(List<VisitResponse> visits) {
-    final sorted = [...visits]..sort((a, b) => a.startAt.compareTo(b.startAt));
-    final placements = <_Placement>[];
-
-    var cluster = <_Placement>[];
-    var laneEnds = <DateTime>[];
-    DateTime? clusterEnd;
-
-    void closeCluster() {
-      for (final placement in cluster) {
-        placement.columnCount = laneEnds.length;
-      }
-      cluster = [];
-      laneEnds = [];
-      clusterEnd = null;
-    }
-
-    for (final visit in sorted) {
-      final start = TenantClock.toTenant(visit.startAt);
-      final end = TenantClock.toTenant(visit.endAt);
-
-      if (clusterEnd != null && !start.isBefore(clusterEnd!)) closeCluster();
-
-      var column = laneEnds.indexWhere((laneEnd) => !start.isBefore(laneEnd));
-      if (column == -1) {
-        laneEnds.add(end);
-        column = laneEnds.length - 1;
-      } else {
-        laneEnds[column] = end;
-      }
-
-      final placement = _Placement(visit: visit, column: column);
-      cluster.add(placement);
-      placements.add(placement);
-      clusterEnd =
-          clusterEnd == null || end.isAfter(clusterEnd!) ? end : clusterEnd;
-    }
-
-    closeCluster();
-    return placements;
-  }
-
-  String _initialsOf(String name) {
-    final parts =
-        name.split(' ').where((part) => part.trim().isNotEmpty).toList();
-    if (parts.isEmpty) return '—';
-    if (parts.length == 1) return parts.first.characters.first.toUpperCase();
-    return '${parts.first.characters.first}${parts.last.characters.first}'
-        .toUpperCase();
-  }
-}
-
-class _Lane {
-  const _Lane({required this.id, required this.name, this.staff});
-
-  final String id;
-  final String name;
-  final StaffResponse? staff;
-}
-
-class _Placement {
-  _Placement({required this.visit, required this.column});
-
-  final VisitResponse visit;
-  final int column;
-  int columnCount = 1;
 }
 
 class _VisitBlock extends StatelessWidget {

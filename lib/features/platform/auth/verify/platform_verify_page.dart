@@ -2,7 +2,7 @@ import 'package:fitcore_client/core/api/api_client.dart';
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/routing/platform_paths.dart';
 import 'package:fitcore_client/features/platform/auth/api/platform_auth_api.dart';
-import 'package:fitcore_client/features/platform/auth/models/platform_verify_models.dart';
+import 'package:fitcore_client/features/platform/auth/models/platform_verify_request.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 

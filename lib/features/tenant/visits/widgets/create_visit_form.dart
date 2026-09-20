@@ -1,9 +1,10 @@
 import 'package:fitcore_client/core/api/api_exception.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
-import 'package:fitcore_client/features/tenant/memberships/models/memberships_models.dart';
-import 'package:fitcore_client/features/tenant/staff/models/staff_models.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
+import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:fitcore_client/features/tenant/visits/api/visits_api.dart';
-import 'package:fitcore_client/features/tenant/visits/models/visits_models.dart';
+import 'package:fitcore_client/features/tenant/visits/models/create_visit_request.dart';
+import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart';
 import 'package:flutter/material.dart';
 
 class CreateVisitForm extends StatefulWidget {
