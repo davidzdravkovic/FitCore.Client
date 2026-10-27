@@ -4,6 +4,8 @@ abstract final class StaffPaths {
   static const login = '/staff/login';
   static const activate = '/staff/activate';
   static const home = '/staff';
+  static const members = '/staff/members';
+  static const profile = '/staff/profile';
 
   static bool matches(String path) =>
       path == root || path.startsWith('$root/');

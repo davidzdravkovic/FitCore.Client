@@ -41,67 +41,66 @@ class FitDataPanel extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(FitCoreRadius.lg),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (hasHead)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: FitCoreSpace.x4,
-                  vertical: FitCoreSpace.x3,
-                ),
-                decoration: BoxDecoration(
-                  border: Border(bottom: BorderSide(color: t.borderSubtle)),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (title != null || trailing != null)
-                      Row(
-                        children: [
-                          if (title != null)
-                            Expanded(
-                              child: Text(
-                                title!,
-                                style: theme.textTheme.titleSmall,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            )
-                          else
-                            const Spacer(),
-                          ?trailing,
-                        ],
-                      ),
-                    if (toolbar != null) ...[
+              if (hasHead)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: FitCoreSpace.x4,
+                    vertical: FitCoreSpace.x3,
+                  ),
+                  decoration: BoxDecoration(
+                    border: Border(bottom: BorderSide(color: t.borderSubtle)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
                       if (title != null || trailing != null)
-                        const SizedBox(height: FitCoreSpace.x3),
-                      toolbar!,
+                        Row(
+                          children: [
+                            if (title != null)
+                              Expanded(
+                                child: Text(
+                                  title!,
+                                  style: theme.textTheme.titleSmall,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              )
+                            else
+                              const Spacer(),
+                            ?trailing,
+                          ],
+                        ),
+                      if (toolbar != null) ...[
+                        if (title != null || trailing != null)
+                          const SizedBox(height: FitCoreSpace.x3),
+                        toolbar!,
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-            Expanded(
-              child: padded
+              padded
                   ? Padding(
                       padding: const EdgeInsets.all(FitCoreSpace.x4),
                       child: child,
                     )
                   : child,
-            ),
-            if (footer != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: FitCoreSpace.x4,
-                  vertical: FitCoreSpace.x2,
+              if (footer != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: FitCoreSpace.x4,
+                    vertical: FitCoreSpace.x2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: t.canvas,
+                    border: Border(top: BorderSide(color: t.borderSubtle)),
+                  ),
+                  child: footer!,
                 ),
-                decoration: BoxDecoration(
-                  color: t.canvas,
-                  border: Border(top: BorderSide(color: t.borderSubtle)),
-                ),
-                child: footer!,
-              ),
-          ],
+            ],
+          ),
         ),
-      ),
     );
   }
 }
@@ -142,24 +141,26 @@ class FitPageBody extends StatelessWidget {
         children: [
           header,
           SizedBox(height: compact ? FitCoreSpace.x3 : FitCoreSpace.x5),
-          Expanded(child: child),
+          child,
         ],
       ),
     );
 
-    // Always claim the shell width first. Optional maxWidth only caps on
-    // very wide desktops — never shrink-wrap on phones.
+    // Canvas shows below the card. The shell still fills the window; this
+    // page only sizes to its header + records.
     return SizedBox(
       width: double.infinity,
-      child: maxWidth.isFinite
-          ? Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: BoxConstraints(maxWidth: maxWidth),
-                child: SizedBox(width: double.infinity, child: content),
-              ),
-            )
-          : content,
+      child: SingleChildScrollView(
+        child: maxWidth.isFinite
+            ? Align(
+                alignment: Alignment.topCenter,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: maxWidth),
+                  child: SizedBox(width: double.infinity, child: content),
+                ),
+              )
+            : content,
+      ),
     );
   }
 }

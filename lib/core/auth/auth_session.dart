@@ -19,4 +19,6 @@ class AuthSession {
   static bool get isTenantStaff => hasRole('TenantStaff');
 
   static bool get isMember => hasRole('Member');
+
+  static String? get subjectId => _claims?.subject;
 }

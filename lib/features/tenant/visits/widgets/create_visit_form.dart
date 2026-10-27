@@ -216,26 +216,35 @@ class _CreateVisitFormState extends State<CreateVisitForm> {
                   },
           ),
           const SizedBox(height: 16),
-          DropdownMenu<String>(
-            initialSelection: _coachStaffId,
-            label: const Text('Coach'),
-            expandedInsets: EdgeInsets.zero,
-            enableSearch: true,
-            requestFocusOnTap: true,
-            dropdownMenuEntries: [
-              for (final person in widget.staff)
-                DropdownMenuEntry(
-                  value: person.id,
-                  label: _staffLabel(person),
-                ),
-            ],
-            onSelected: _isSubmitting
-                ? null
-                : (value) {
-                    if (value == null) return;
-                    setState(() => _coachStaffId = value);
-                  },
-          ),
+          if (widget.staff.length == 1)
+            InputDecorator(
+              decoration: const InputDecoration(
+                labelText: 'Coach',
+                border: OutlineInputBorder(),
+              ),
+              child: Text(_staffLabel(widget.staff.first)),
+            )
+          else
+            DropdownMenu<String>(
+              initialSelection: _coachStaffId,
+              label: const Text('Coach'),
+              expandedInsets: EdgeInsets.zero,
+              enableSearch: true,
+              requestFocusOnTap: true,
+              dropdownMenuEntries: [
+                for (final person in widget.staff)
+                  DropdownMenuEntry(
+                    value: person.id,
+                    label: _staffLabel(person),
+                  ),
+              ],
+              onSelected: _isSubmitting
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+                      setState(() => _coachStaffId = value);
+                    },
+            ),
           const SizedBox(height: 16),
           OutlinedButton(
             onPressed: _isSubmitting ? null : _pickStart,

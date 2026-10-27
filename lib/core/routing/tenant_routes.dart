@@ -7,7 +7,6 @@ import 'package:fitcore_client/features/tenant/dashboard/widgets/dashboard_place
 import 'package:fitcore_client/features/tenant/dashboard/widgets/overview/overview_page.dart';
 import 'package:fitcore_client/features/tenant/members/widgets/members_panel.dart';
 import 'package:fitcore_client/features/tenant/memberships/widgets/memberships_panel.dart';
-import 'package:fitcore_client/features/tenant/plans/widgets/plans_panel.dart';
 import 'package:fitcore_client/features/tenant/services/widgets/services_panel.dart';
 import 'package:fitcore_client/features/tenant/staff/widgets/staff_panel.dart';
 import 'package:fitcore_client/features/tenant/visits/widgets/visits_panel.dart';
@@ -50,7 +49,7 @@ final List<RouteBase> tenantRoutes = [
       ),
       GoRoute(
         path: TenantPaths.plans,
-        builder: (context, state) => const PlansPanel(),
+        redirect: (context, state) => TenantPaths.services,
       ),
       GoRoute(
         path: TenantPaths.memberships,

@@ -28,6 +28,7 @@ class MemberLoginPage extends StatelessWidget {
         MemberSession.set(
           organizationName: response.organizationName,
           firstName: response.firstName,
+          timeZone: response.timeZone,
         );
         context.go(MemberPaths.home);
       },

@@ -1,29 +1,7 @@
-import 'package:fitcore_client/core/api/api_client.dart';
-import 'package:fitcore_client/core/routing/member_paths.dart';
-import 'package:fitcore_client/core/widgets/auth/portal_placeholder_dashboard.dart';
-import 'package:fitcore_client/features/member/auth/member_session.dart';
-import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+/// Deprecated entry — member home is split into schedule + profile panels.
+/// Kept so old imports do not break; prefer [MemberSchedulePanel] /
+/// [MemberProfilePanel] under the workspace shell.
+library;
 
-class MemberDashboardPage extends StatelessWidget {
-  const MemberDashboardPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final orgName = MemberSession.organizationName?.trim();
-
-    return PortalPlaceholderDashboard(
-      title: (orgName != null && orgName.isNotEmpty) ? orgName : 'Member',
-      firstName: MemberSession.firstName,
-      icon: Icons.person_outline,
-      body:
-          'Your member area is empty for now. '
-          'Bookings and memberships will show up here.',
-      onSignOut: () {
-        ApiClient.instance.setAccessToken(null);
-        MemberSession.clear();
-        context.go(MemberPaths.login);
-      },
-    );
-  }
-}
+export 'widgets/member_schedule_panel.dart';
+export 'widgets/member_profile_panel.dart';

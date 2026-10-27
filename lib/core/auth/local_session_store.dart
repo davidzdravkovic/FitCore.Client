@@ -21,16 +21,17 @@ class LocalSessionStore {
       final claims = JwtClaims.tryParse(token);
       if (claims == null || claims.isExpired) {
         await prefs.remove(_tokenKey);
+        await saveTenantProfile(organizationName: null,
+                                ownerFirstName: null,
+                                   timeZone: null); 
+
       } else {
         ApiClient.instance.setAccessToken(token, persist: false);
+         TenantSession.restore( organizationName: prefs.getString(_orgNameKey),
+                                ownerFirstName: prefs.getString(_ownerFirstNameKey),
+                                timeZone: prefs.getString(_timeZoneKey));
       }
     }
-
-    TenantSession.restore(
-      organizationName: prefs.getString(_orgNameKey),
-      ownerFirstName: prefs.getString(_ownerFirstNameKey),
-      timeZone: prefs.getString(_timeZoneKey),
-    );
   }
 
   static Future<void> saveAccessToken(String? token) async {
@@ -67,5 +68,15 @@ class LocalSessionStore {
       ownerFirstName: null,
       timeZone: null,
     );
+  }
+
+  /// Gym IANA zone for staff/member (and refresh hydrate via [TenantSession]).
+  static Future<void> saveTimeZone(String? timeZone) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (timeZone == null || timeZone.isEmpty) {
+      await prefs.remove(_timeZoneKey);
+    } else {
+      await prefs.setString(_timeZoneKey, timeZone);
+    }
   }
 }

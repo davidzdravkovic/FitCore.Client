@@ -5,7 +5,6 @@ enum DashboardSection {
   overview,
   members,
   services,
-  plans,
   memberships,
   schedule,
   staff,
@@ -16,7 +15,6 @@ enum DashboardSection {
         DashboardSection.overview => TenantPaths.home,
         DashboardSection.members => TenantPaths.members,
         DashboardSection.services => TenantPaths.services,
-        DashboardSection.plans => TenantPaths.plans,
         DashboardSection.memberships => TenantPaths.memberships,
         DashboardSection.schedule => TenantPaths.schedule,
         DashboardSection.staff => TenantPaths.staff,
@@ -33,8 +31,10 @@ enum DashboardSection {
       return DashboardSection.memberships;
     }
     if (path.startsWith(TenantPaths.members)) return DashboardSection.members;
-    if (path.startsWith(TenantPaths.services)) return DashboardSection.services;
-    if (path.startsWith(TenantPaths.plans)) return DashboardSection.plans;
+    if (path.startsWith(TenantPaths.services) ||
+        path.startsWith(TenantPaths.plans)) {
+      return DashboardSection.services;
+    }
     if (path.startsWith(TenantPaths.schedule)) return DashboardSection.schedule;
     if (path.startsWith(TenantPaths.staff)) return DashboardSection.staff;
     if (path.startsWith(TenantPaths.billing)) return DashboardSection.billing;
@@ -70,11 +70,6 @@ const List<DashboardNavItem> dashboardNavItems = [
     section: DashboardSection.services,
     label: 'Services',
     icon: Icons.fitness_center_outlined,
-  ),
-  DashboardNavItem(
-    section: DashboardSection.plans,
-    label: 'Plans',
-    icon: Icons.sell_outlined,
   ),
   DashboardNavItem(
     section: DashboardSection.memberships,

@@ -4,13 +4,15 @@ import 'package:fitcore_client/features/tenant/members/models/invite_member_resp
 import 'package:fitcore_client/features/tenant/members/models/member_response.dart';
 
 class MembersApi {
-  MembersApi({ApiClient? client}) : _client = client ?? ApiClient.instance;
+  MembersApi({ApiClient? client, this.basePath = '/api/members'})
+      : _client = client ?? ApiClient.instance;
 
   final ApiClient _client;
+  final String basePath;
 
   Future<List<MemberResponse>> list() {
     return _client.request<List<MemberResponse>>(
-      '/api/members',
+      basePath,
       parse: (json) {
         final items = json as List<dynamic>? ?? const [];
         return items.map(MemberResponse.fromJson).toList();
@@ -20,7 +22,7 @@ class MembersApi {
 
   Future<MemberResponse> create(CreateMemberRequest request) {
     return _client.request<MemberResponse>(
-      '/api/members',
+      basePath,
       method: 'POST',
       data: request.toJson(),
       parse: MemberResponse.fromJson,
@@ -29,7 +31,7 @@ class MembersApi {
 
   Future<MemberResponse> importMember(CreateMemberRequest request) {
     return _client.request<MemberResponse>(
-      '/api/members/import',
+      '$basePath/import',
       method: 'POST',
       data: request.toJson(),
       parse: MemberResponse.fromJson,
@@ -38,7 +40,7 @@ class MembersApi {
 
   Future<InviteMemberResponse> invite(String id) {
     return _client.request<InviteMemberResponse>(
-      '/api/members/$id/invite',
+      '$basePath/$id/invite',
       method: 'POST',
       parse: InviteMemberResponse.fromJson,
     );
@@ -46,7 +48,7 @@ class MembersApi {
 
   Future<void> delete(String id) {
     return _client.request<void>(
-      '/api/members/$id',
+      '$basePath/$id',
       method: 'DELETE',
       parse: (_) {},
     );

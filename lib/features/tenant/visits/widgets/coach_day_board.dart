@@ -44,6 +44,22 @@ class CoachDayBoard extends StatefulWidget {
   State<CoachDayBoard> createState() => _CoachDayBoardState();
 }
 
+class _BoardScale {
+  const _BoardScale.compact()
+      : hourHeight = 64,
+        rulerWidth = 52,
+        headerHeight = 56;
+
+  const _BoardScale.regular()
+      : hourHeight = CoachDayBoardMetrics.hourHeight,
+        rulerWidth = CoachDayBoardMetrics.rulerWidth,
+        headerHeight = CoachDayBoardMetrics.headerHeight;
+
+  final double hourHeight;
+  final double rulerWidth;
+  final double headerHeight;
+}
+
 class _CoachDayBoardState extends State<CoachDayBoard> {
   final ScrollController _headerScroll = ScrollController();
   final ScrollController _laneScroll = ScrollController();
@@ -52,6 +68,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
 
   bool _syncing = false;
   bool _restoredScroll = false;
+  int _selectedLaneIndex = 0;
 
   @override
   void initState() {
@@ -81,7 +98,11 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     _syncing = false;
   }
 
-  void _restoreScrollOnce(int firstHour, List<VisitResponse> dayVisits) {
+  void _restoreScrollOnce(
+    int firstHour,
+    List<VisitResponse> dayVisits,
+    double hourHeight,
+  ) {
     if (_restoredScroll) return;
     _restoredScroll = true;
 
@@ -90,8 +111,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       final anchor = dayVisits.isEmpty
           ? 8.0
           : TenantClock.toTenant(dayVisits.first.startAt).hour.toDouble();
-      final target =
-          (anchor - firstHour - 0.5) * CoachDayBoardMetrics.hourHeight;
+      final target = (anchor - firstHour - 0.5) * hourHeight;
       _verticalScroll.jumpTo(
         target.clamp(0.0, _verticalScroll.position.maxScrollExtent),
       );
@@ -116,6 +136,24 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
   }
 
   @override
+  void didUpdateWidget(covariant CoachDayBoard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.staff != widget.staff || oldWidget.day != widget.day) {
+      _restoredScroll = false;
+    }
+    final laneCount = CoachDayBoardLayout.lanes(
+      staff: widget.staff,
+      dayVisits: CoachDayBoardLayout.visitsForDay(
+        visits: widget.visits,
+        day: widget.day,
+      ),
+    ).length;
+    if (_selectedLaneIndex >= laneCount) {
+      _selectedLaneIndex = math.max(0, laneCount - 1);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dayVisits = CoachDayBoardLayout.visitsForDay(
@@ -127,22 +165,31 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       dayVisits: dayVisits,
     );
     final (firstHour, lastHour) = CoachDayBoardLayout.hourWindow(dayVisits);
-    final gridHeight = (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
-
-    _restoreScrollOnce(firstHour, dayVisits);
-
     final compact =
         MediaQuery.sizeOf(context).width < FitCoreBreakpoints.compact;
+    final scale = compact ? const _BoardScale.compact() : const _BoardScale.regular();
+    final gridHeight = (lastHour - firstHour) * scale.hourHeight;
+
+    _restoreScrollOnce(firstHour, dayVisits, scale.hourHeight);
+
+    final phoneMultiCoach = compact && lanes.length > 1;
+    final visibleLanes = phoneMultiCoach
+        ? [lanes[_selectedLaneIndex.clamp(0, lanes.length - 1)]]
+        : lanes;
 
     final grid = lanes.isEmpty
         ? _buildEmptyState()
         : _buildGrid(
             theme,
             lanes,
+            visibleLanes,
             dayVisits,
             firstHour,
             lastHour,
             gridHeight,
+            scale,
+            phoneMultiCoach: phoneMultiCoach,
+            phone: compact,
           );
 
     if (!widget.showToolbar) return grid;
@@ -278,14 +325,55 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
   }
 
+  Widget _buildCoachStrip(BuildContext context, List<CoachDayLane> lanes) {
+    final theme = Theme.of(context);
+    final t = context.fc;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: t.canvas,
+        border: Border(bottom: BorderSide(color: t.borderSubtle)),
+      ),
+      padding: const EdgeInsets.fromLTRB(
+        FitCoreSpace.x3,
+        FitCoreSpace.x2,
+        FitCoreSpace.x3,
+        FitCoreSpace.x3,
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var i = 0; i < lanes.length; i++) ...[
+              if (i > 0) const SizedBox(width: FitCoreSpace.x2),
+              _CoachChip(
+                label: CoachDayBoardLayout.shortCoachLabel(
+                  lanes[i].name.isEmpty ? 'Unassigned' : lanes[i].name,
+                ),
+                selected: i == _selectedLaneIndex,
+                onTap: () => setState(() => _selectedLaneIndex = i),
+                theme: theme,
+                tokens: t,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildGrid(
     ThemeData theme,
+    List<CoachDayLane> allLanes,
     List<CoachDayLane> lanes,
     List<VisitResponse> dayVisits,
     int firstHour,
     int lastHour,
     double gridHeight,
-  ) {
+    _BoardScale scale, {
+    required bool phoneMultiCoach,
+    required bool phone,
+  }) {
     final t = context.fc;
 
     return LayoutBuilder(
@@ -293,13 +381,15 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
         final laneWidth = CoachDayBoardLayout.laneWidth(
           viewportWidth: constraints.maxWidth,
           laneCount: lanes.length,
+          rulerWidth: scale.rulerWidth,
         );
         final gridWidth = laneWidth * lanes.length;
         final viewport = math.max(
           0.0,
-          constraints.maxWidth - CoachDayBoardMetrics.rulerWidth,
+          constraints.maxWidth - scale.rulerWidth,
         );
-        final overflowsHorizontally = gridWidth > viewport + 0.5;
+        final overflowsHorizontally =
+            !phoneMultiCoach && gridWidth > viewport + 0.5;
 
         // Web/desktop: wheel is vertical-only by default; allow click-drag and
         // show a thumb so clipped coach columns are discoverable.
@@ -326,12 +416,13 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             clipBehavior: Clip.antiAlias,
             child: Column(
               children: [
+                if (phoneMultiCoach) _buildCoachStrip(context, allLanes),
                 SizedBox(
-                  height: CoachDayBoardMetrics.headerHeight,
+                  height: scale.headerHeight,
                   child: Row(
                     children: [
                       SizedBox(
-                        width: CoachDayBoardMetrics.rulerWidth,
+                        width: scale.rulerWidth,
                         child: _headerCorner(context),
                       ),
                       Expanded(
@@ -365,13 +456,18 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       SizedBox(
-                        width: CoachDayBoardMetrics.rulerWidth,
+                        width: scale.rulerWidth,
                         // No scrollbar here — one vertical thumb on the right only.
                         child: SingleChildScrollView(
                           controller: _rulerScroll,
                           child: SizedBox(
                             height: gridHeight,
-                            child: _buildRuler(context, firstHour, lastHour),
+                            child: _buildRuler(
+                              context,
+                              firstHour,
+                              lastHour,
+                              scale.hourHeight,
+                            ),
                           ),
                         ),
                       ),
@@ -405,6 +501,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                                                 laneWidth,
                                                 firstHour,
                                                 lastHour,
+                                                scale.hourHeight,
                                               ),
                                           ],
                                         ),
@@ -412,6 +509,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
                                           context,
                                           firstHour,
                                           lastHour,
+                                          scale.hourHeight,
                                         ),
                                       ],
                                     ),
@@ -536,7 +634,12 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     );
   }
 
-  Widget _buildRuler(BuildContext context, int firstHour, int lastHour) {
+  Widget _buildRuler(
+    BuildContext context,
+    int firstHour,
+    int lastHour,
+    double hourHeight,
+  ) {
     final theme = Theme.of(context);
     final t = context.fc;
 
@@ -548,7 +651,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
         children: [
           for (var hour = firstHour; hour < lastHour; hour++)
             SizedBox(
-              height: CoachDayBoardMetrics.hourHeight,
+              height: hourHeight,
               child: Align(
                 alignment: Alignment.topRight,
                 child: Padding(
@@ -575,6 +678,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     double width,
     int firstHour,
     int lastHour,
+    double hourHeight,
   ) {
     final laneVisits = CoachDayBoardLayout.visitsInLane(
       dayVisits: dayVisits,
@@ -582,7 +686,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
       staff: widget.staff,
     );
     final placements = CoachDayBoardLayout.placeOverlaps(laneVisits);
-    final gridHeight = (lastHour - firstHour) * CoachDayBoardMetrics.hourHeight;
+    final gridHeight = (lastHour - firstHour) * hourHeight;
     final coach = lane.staff;
     final t = context.fc;
 
@@ -595,7 +699,7 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             children: [
               for (var hour = firstHour; hour < lastHour; hour++)
                 SizedBox(
-                  height: CoachDayBoardMetrics.hourHeight,
+                  height: hourHeight,
                   child: InkWell(
                     onTap: (coach == null || widget.onSlotTap == null)
                         ? null
@@ -621,7 +725,13 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
             ],
           ),
           for (final placement in placements)
-            _buildVisitBlock(Theme.of(context), placement, width, firstHour),
+            _buildVisitBlock(
+              Theme.of(context),
+              placement,
+              width,
+              firstHour,
+              hourHeight,
+            ),
         ],
       ),
     );
@@ -632,12 +742,14 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     CoachDayPlacement placement,
     double laneWidth,
     int firstHour,
+    double hourHeight,
   ) {
     final visit = placement.visit;
     final geometry = CoachDayBoardLayout.visitGeometry(
       placement: placement,
       laneWidth: laneWidth,
       firstHour: firstHour,
+      hourHeight: hourHeight,
     );
 
     return Positioned(
@@ -657,11 +769,13 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
     BuildContext context,
     int firstHour,
     int lastHour,
+    double hourHeight,
   ) {
     final offset = CoachDayBoardLayout.nowLineOffset(
       day: widget.day,
       firstHour: firstHour,
       lastHour: lastHour,
+      hourHeight: hourHeight,
     );
     if (offset == null) return const [];
 
@@ -687,6 +801,55 @@ class _CoachDayBoardState extends State<CoachDayBoard> {
   }
 }
 
+class _CoachChip extends StatelessWidget {
+  const _CoachChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    required this.theme,
+    required this.tokens,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final ThemeData theme;
+  final FitCoreTokens tokens;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? tokens.accent : tokens.elevated,
+      borderRadius: BorderRadius.circular(FitCoreRadius.md),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(FitCoreRadius.md),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 44, minWidth: 64),
+          padding: const EdgeInsets.symmetric(
+            horizontal: FitCoreSpace.x3,
+            vertical: FitCoreSpace.x2,
+          ),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(FitCoreRadius.md),
+            border: Border.all(
+              color: selected ? tokens.accent : tokens.borderDefault,
+            ),
+          ),
+          child: Text(
+            label,
+            style: theme.textTheme.labelLarge?.copyWith(
+              color: selected ? tokens.onAccent : tokens.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StepButton extends StatelessWidget {
   const _StepButton({
     required this.icon,
@@ -701,8 +864,8 @@ class _StepButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 38,
-      height: 38,
+      width: 40,
+      height: 40,
       child: IconButton(
         onPressed: onPressed,
         tooltip: tooltip,

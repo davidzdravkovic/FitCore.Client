@@ -12,20 +12,23 @@ import 'package:syncfusion_flutter_calendar/calendar.dart';
 class CoachCalendar extends StatefulWidget {
   const CoachCalendar({
     super.key,
-    required this.coach,
     required this.visits,
     required this.initialDay,
     required this.onVisitTap,
-    required this.onBack,
     required this.onRangeChanged,
+    this.coach,
+    this.onBack,
     this.onSlotTap,
   });
 
-  final StaffResponse coach;
+  /// When null, every visit in [visits] is shown (member self-view).
+  final StaffResponse? coach;
   final List<VisitResponse> visits;
   final DateTime initialDay;
   final ValueChanged<VisitResponse> onVisitTap;
-  final VoidCallback onBack;
+
+  /// Tenant day-board drill-in. Omitted on staff/member portals.
+  final VoidCallback? onBack;
 
   /// Local `[from, to)` for the visible day/week/month; parent refetches visits.
   final void Function(VisitCalendarRange range, DateTime focusDay)
@@ -41,6 +44,7 @@ class CoachCalendar extends StatefulWidget {
 class _CoachCalendarState extends State<CoachCalendar> {
   final CalendarController _controller = CalendarController();
   VisitCalendarRange? _lastNotified;
+  bool _appliedCompactDefault = false;
 
   static const _views = [
     CalendarView.day,
@@ -54,6 +58,18 @@ class _CoachCalendarState extends State<CoachCalendar> {
     _controller.view = CalendarView.week;
     _controller.displayDate = widget.initialDay;
     WidgetsBinding.instance.addPostFrameCallback((_) => _emitRange());
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_appliedCompactDefault) return;
+    final phone =
+        MediaQuery.sizeOf(context).width < FitCoreBreakpoints.compact;
+    if (phone) {
+      _controller.view = CalendarView.day;
+    }
+    _appliedCompactDefault = true;
   }
 
   @override
@@ -84,6 +100,16 @@ class _CoachCalendarState extends State<CoachCalendar> {
     }
     _lastNotified = range;
     widget.onRangeChanged(range, focus);
+  }
+
+  /// Syncfusion keeps blue slot rings after tap; we only use [onTap] for actions.
+  void _clearCalendarCellSelection() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (_controller.selectedDate != null) {
+        _controller.selectedDate = null;
+      }
+    });
   }
 
   void _setView(CalendarView view) {
@@ -157,11 +183,15 @@ class _CoachCalendarState extends State<CoachCalendar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = context.fc;
-    final coachName =
-        '${widget.coach.firstName} ${widget.coach.lastName}'.trim();
-    final coachVisits = widget.visits
-        .where((visit) => visit.coachStaffId == widget.coach.id)
-        .toList();
+    final coach = widget.coach;
+    final coachName = coach == null
+        ? null
+        : '${coach.firstName} ${coach.lastName}'.trim();
+    final coachVisits = coach == null
+        ? widget.visits
+        : widget.visits
+            .where((visit) => visit.coachStaffId == coach.id)
+            .toList();
     final byId = {for (final visit in coachVisits) visit.id: visit};
     final activeView = _controller.view ?? CalendarView.week;
 
@@ -181,7 +211,7 @@ class _CoachCalendarState extends State<CoachCalendar> {
           onPickDate: _pickDate,
           onSetView: _setView,
         ),
-        const SizedBox(height: FitCoreSpace.x2),
+        const SizedBox(height: FitCoreSpace.x1),
         Expanded(
           child: DecoratedBox(
             decoration: BoxDecoration(
@@ -199,14 +229,14 @@ class _CoachCalendarState extends State<CoachCalendar> {
                   color: t.onAccent,
                   fontWeight: FontWeight.w700,
                 ),
-                selectionDecoration: BoxDecoration(
-                  border: Border.all(color: t.accent.withValues(alpha: 0.55)),
-                  borderRadius: BorderRadius.circular(FitCoreRadius.sm),
-                ),
+                selectionDecoration: const BoxDecoration(),
                 headerHeight: 0,
                 showNavigationArrow: false,
                 showDatePickerButton: false,
-                viewHeaderHeight: 52,
+                // Day view: chrome already shows the date; Syncfusion's day
+                // header sits over the time ruler and overlaps when scrolling.
+                viewHeaderHeight:
+                    activeView == CalendarView.day ? 0.0 : 52.0,
                 viewHeaderStyle: ViewHeaderStyle(
                   backgroundColor: t.canvas,
                   dayTextStyle: theme.textTheme.labelSmall?.copyWith(
@@ -271,8 +301,16 @@ class _CoachCalendarState extends State<CoachCalendar> {
                 timeSlotViewSettings: TimeSlotViewSettings(
                   startHour: 6,
                   endHour: 22,
-                  timeIntervalHeight: 58,
-                  timeRulerSize: 56,
+                  timeIntervalHeight:
+                      MediaQuery.sizeOf(context).width <
+                              FitCoreBreakpoints.compact
+                          ? 52
+                          : 58,
+                  timeRulerSize:
+                      MediaQuery.sizeOf(context).width <
+                              FitCoreBreakpoints.compact
+                          ? 48
+                          : 56,
                   timeTextStyle: theme.textTheme.labelSmall?.copyWith(
                     color: t.textSecondary,
                     fontWeight: FontWeight.w500,
@@ -304,49 +342,57 @@ class _CoachCalendarState extends State<CoachCalendar> {
                     _emitRange();
                   });
                 },
+                onSelectionChanged: (_) => _clearCalendarCellSelection(),
                 onTap: (details) {
-                  if (_controller.view == CalendarView.month &&
-                      details.targetElement == CalendarElement.calendarCell &&
-                      details.date != null) {
-                    final day = VisitCalendarRange.dayStart(details.date!);
-                    _controller.view = CalendarView.day;
-                    _controller.displayDate = day;
-                    _lastNotified = null;
-                    WidgetsBinding.instance.addPostFrameCallback(
-                      (_) => _emitRange(),
+                  try {
+                    if (_controller.view == CalendarView.month &&
+                        details.targetElement == CalendarElement.calendarCell &&
+                        details.date != null) {
+                      final day = VisitCalendarRange.dayStart(details.date!);
+                      _controller.view = CalendarView.day;
+                      _controller.displayDate = day;
+                      _lastNotified = null;
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => _emitRange(),
+                      );
+                      return;
+                    }
+
+                    final tapped = details.appointments;
+                    if (tapped != null && tapped.isNotEmpty) {
+                      final appointment = tapped.first;
+                      if (appointment is! Appointment) return;
+                      final visit = byId[appointment.id?.toString()];
+                      if (visit == null) return;
+                      widget.onVisitTap(visit);
+                      return;
+                    }
+
+                    final slot = details.date;
+                    final view = _controller.view;
+                    final slottable =
+                        view == CalendarView.day ||
+                        view == CalendarView.week ||
+                        view == CalendarView.workWeek;
+                    if (slot == null ||
+                        !slottable ||
+                        widget.onSlotTap == null ||
+                        coach == null) {
+                      return;
+                    }
+                    widget.onSlotTap!(
+                      coach,
+                      DateTime(
+                        slot.year,
+                        slot.month,
+                        slot.day,
+                        slot.hour,
+                        slot.minute,
+                      ),
                     );
-                    return;
+                  } finally {
+                    _clearCalendarCellSelection();
                   }
-
-                  final tapped = details.appointments;
-                  if (tapped != null && tapped.isNotEmpty) {
-                    final appointment = tapped.first;
-                    if (appointment is! Appointment) return;
-                    final visit = byId[appointment.id?.toString()];
-                    if (visit == null) return;
-                    widget.onVisitTap(visit);
-                    return;
-                  }
-
-                  final slot = details.date;
-                  final view = _controller.view;
-                  final slottable =
-                      view == CalendarView.day ||
-                      view == CalendarView.week ||
-                      view == CalendarView.workWeek;
-                  if (slot == null || !slottable || widget.onSlotTap == null) {
-                    return;
-                  }
-                  widget.onSlotTap!(
-                    widget.coach,
-                    DateTime(
-                      slot.year,
-                      slot.month,
-                      slot.day,
-                      slot.hour,
-                      slot.minute,
-                    ),
-                  );
                 },
               ),
             ),
@@ -372,13 +418,13 @@ class _CoachChrome extends StatelessWidget {
     required this.onSetView,
   });
 
-  final String coachName;
+  final String? coachName;
   final int visitCount;
   final String headerLabel;
   final CalendarView activeView;
   final List<CalendarView> views;
   final String Function(CalendarView) viewLabel;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
   final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onPickDate;
@@ -391,14 +437,20 @@ class _CoachChrome extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 720;
+        final narrow = constraints.maxWidth < FitCoreBreakpoints.compact;
+
+        final showIdentity = onBack != null;
+        final badge = FitCountBadge(
+          count: visitCount,
+          noun: visitCount == 1 ? 'visit' : 'visits',
+        );
 
         final identity = Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: 36,
-              height: 36,
+              width: 32,
+              height: 32,
               child: IconButton(
                 onPressed: onBack,
                 icon: const Icon(Icons.arrow_back, size: 18),
@@ -407,99 +459,148 @@ class _CoachChrome extends StatelessWidget {
               ),
             ),
             const SizedBox(width: FitCoreSpace.x1),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 160),
-              child: Text(
-                coachName,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+            if (coachName != null && coachName!.isNotEmpty) ...[
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 140),
+                child: Text(
+                  coachName!,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(width: FitCoreSpace.x2),
-            FitCountBadge(
-              count: visitCount,
-              noun: visitCount == 1 ? 'visit' : 'visits',
-            ),
+              const SizedBox(width: FitCoreSpace.x2),
+            ],
+            badge,
           ],
         );
 
-        final controls = Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _NavButton(
-              icon: Icons.chevron_left,
-              tooltip: 'Previous',
-              onPressed: onPrev,
+        final datePicker = InkWell(
+          onTap: onPickDate,
+          borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: FitCoreSpace.x2,
+              vertical: narrow ? 4 : FitCoreSpace.x1,
             ),
-            const SizedBox(width: FitCoreSpace.x1),
-            InkWell(
-              onTap: onPickDate,
-              borderRadius: BorderRadius.circular(FitCoreRadius.sm),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: FitCoreSpace.x2,
-                  vertical: FitCoreSpace.x1 + 2,
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
+            child: Row(
+              mainAxisSize: narrow ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisAlignment:
+                  narrow ? MainAxisAlignment.center : MainAxisAlignment.start,
+              children: [
+                if (narrow)
+                  Flexible(
+                    child: Text(
                       headerLabel,
-                      style: theme.textTheme.titleSmall?.copyWith(
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(width: FitCoreSpace.x1),
-                    Icon(
-                      Icons.expand_more,
-                      size: 18,
-                      color: t.textSecondary,
+                  )
+                else
+                  Text(
+                    headerLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
-                  ],
+                  ),
+                const SizedBox(width: 2),
+                Icon(
+                  Icons.expand_more,
+                  size: 16,
+                  color: t.textSecondary,
                 ),
-              ),
+              ],
             ),
-            const SizedBox(width: FitCoreSpace.x1),
-            _NavButton(
-              icon: Icons.chevron_right,
-              tooltip: 'Next',
-              onPressed: onNext,
-            ),
-            const SizedBox(width: FitCoreSpace.x3),
-            _ViewSwitcher(
-              views: views,
-              activeView: activeView,
-              viewLabel: viewLabel,
-              onSetView: onSetView,
-            ),
-          ],
+          ),
+        );
+
+        final viewSwitcher = _ViewSwitcher(
+          views: views,
+          activeView: activeView,
+          viewLabel: viewLabel,
+          onSetView: onSetView,
+          compact: true,
+          stretch: narrow,
         );
 
         if (narrow) {
+          // Date gets the full width between arrows; views sit on the next
+          // thin row so "Mon 5 Oct" is never crushed by Day/Week/Month.
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              identity,
-              const SizedBox(height: FitCoreSpace.x2),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: controls,
+              if (showIdentity) ...[
+                identity,
+                const SizedBox(height: FitCoreSpace.x1),
+              ],
+              Row(
+                children: [
+                  _NavButton(
+                    icon: Icons.chevron_left,
+                    tooltip: 'Previous',
+                    onPressed: onPrev,
+                    compact: true,
+                  ),
+                  Expanded(child: datePicker),
+                  _NavButton(
+                    icon: Icons.chevron_right,
+                    tooltip: 'Next',
+                    onPressed: onNext,
+                    compact: true,
+                  ),
+                ],
+              ),
+              const SizedBox(height: FitCoreSpace.x1),
+              Row(
+                children: [
+                  Expanded(child: viewSwitcher),
+                  if (!showIdentity) ...[
+                    const SizedBox(width: FitCoreSpace.x2),
+                    badge,
+                  ],
+                ],
               ),
             ],
           );
         }
 
-        // One left-aligned chrome strip: coach → date → Day/Week/Month.
+        // One left-aligned chrome strip: back/coach → date → Day/Week/Month.
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: [
-              identity,
-              const SizedBox(width: FitCoreSpace.x4),
-              controls,
+              if (showIdentity) ...[
+                identity,
+                const SizedBox(width: FitCoreSpace.x3),
+              ] else ...[
+                badge,
+                const SizedBox(width: FitCoreSpace.x3),
+              ],
+              _NavButton(
+                icon: Icons.chevron_left,
+                tooltip: 'Previous',
+                onPressed: onPrev,
+                compact: true,
+              ),
+              const SizedBox(width: FitCoreSpace.x1),
+              datePicker,
+              const SizedBox(width: FitCoreSpace.x1),
+              _NavButton(
+                icon: Icons.chevron_right,
+                tooltip: 'Next',
+                onPressed: onNext,
+                compact: true,
+              ),
+              const SizedBox(width: FitCoreSpace.x3),
+              viewSwitcher,
             ],
           ),
         );
@@ -513,15 +614,18 @@ class _NavButton extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onPressed,
+    this.compact = false,
   });
 
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final t = context.fc;
+    final size = compact ? 32.0 : 40.0;
     return Material(
       color: t.elevated,
       shape: RoundedRectangleBorder(
@@ -532,9 +636,9 @@ class _NavButton extends StatelessWidget {
         onTap: onPressed,
         borderRadius: BorderRadius.circular(FitCoreRadius.sm),
         child: SizedBox(
-          width: 32,
-          height: 32,
-          child: Icon(icon, size: 18, color: t.textSecondary),
+          width: size,
+          height: size,
+          child: Icon(icon, size: compact ? 16 : 18, color: t.textSecondary),
         ),
       ),
     );
@@ -547,56 +651,73 @@ class _ViewSwitcher extends StatelessWidget {
     required this.activeView,
     required this.viewLabel,
     required this.onSetView,
+    this.compact = false,
+    this.stretch = false,
   });
 
   final List<CalendarView> views;
   final CalendarView activeView;
   final String Function(CalendarView) viewLabel;
   final ValueChanged<CalendarView> onSetView;
+  final bool compact;
+  final bool stretch;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = context.fc;
 
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: t.canvas,
-        borderRadius: BorderRadius.circular(FitCoreRadius.md),
-        border: Border.all(color: t.borderDefault),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final view in views)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Material(
-                color: activeView == view ? t.accent : Colors.transparent,
-                borderRadius: BorderRadius.circular(FitCoreRadius.sm),
-                child: InkWell(
-                  onTap: () => onSetView(view),
-                  borderRadius: BorderRadius.circular(FitCoreRadius.sm),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: FitCoreSpace.x3,
-                      vertical: FitCoreSpace.x1 + 2,
-                    ),
-                    child: Text(
-                      viewLabel(view),
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: activeView == view
-                            ? t.onAccent
-                            : t.textSecondary,
-                        fontWeight:
-                            activeView == view ? FontWeight.w700 : FontWeight.w500,
-                      ),
-                    ),
-                  ),
+    Widget chip(CalendarView view) {
+      return Material(
+        color: activeView == view ? t.accent : Colors.transparent,
+        borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+        child: InkWell(
+          onTap: () => onSetView(view),
+          borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? FitCoreSpace.x2 : FitCoreSpace.x3,
+              vertical: compact ? 5 : FitCoreSpace.x2,
+            ),
+            child: Center(
+              child: Text(
+                viewLabel(view),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: activeView == view ? t.onAccent : t.textSecondary,
+                  fontWeight:
+                      activeView == view ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
             ),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: stretch ? double.infinity : null,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        color: t.canvas,
+        borderRadius: BorderRadius.circular(FitCoreRadius.sm),
+        border: Border.all(color: t.borderDefault),
+      ),
+      child: Row(
+        mainAxisSize: stretch ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          for (final view in views)
+            if (stretch)
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  child: chip(view),
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 1),
+                child: chip(view),
+              ),
         ],
       ),
     );

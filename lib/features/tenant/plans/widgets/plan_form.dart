@@ -13,11 +13,15 @@ class PlanForm extends StatefulWidget {
     required this.activeServices,
     this.plansApi,
     this.onCreated,
+    this.lockedServiceId,
   });
 
   final List<ServiceResponse> activeServices;
   final PlansApi? plansApi;
   final ValueChanged<PlanResponse>? onCreated;
+
+  /// When set, the service cannot be changed (plan is added from that service).
+  final String? lockedServiceId;
 
   @override
   State<PlanForm> createState() => _PlanFormState();
@@ -37,7 +41,11 @@ class _PlanFormState extends State<PlanForm> {
   @override
   void initState() {
     super.initState();
-    if (widget.activeServices.isNotEmpty) {
+    final locked = widget.lockedServiceId;
+    if (locked != null &&
+        widget.activeServices.any((s) => s.id == locked)) {
+      _serviceId = locked;
+    } else if (widget.activeServices.isNotEmpty) {
       _serviceId = widget.activeServices.first.id;
     }
   }
@@ -102,24 +110,26 @@ class _PlanFormState extends State<PlanForm> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          DropdownMenu<String>(
-            initialSelection: _serviceId,
-            label: const Text('Service'),
-            expandedInsets: EdgeInsets.zero,
-            enableSearch: false,
-            requestFocusOnTap: false,
-            dropdownMenuEntries: [
-              for (final service in widget.activeServices)
-                DropdownMenuEntry(value: service.id, label: service.name),
-            ],
-            onSelected: _isSubmitting
-                ? null
-                : (value) {
-                    if (value == null) return;
-                    setState(() => _serviceId = value);
-                  },
-          ),
-          const SizedBox(height: 16),
+          if (widget.lockedServiceId == null) ...[
+            DropdownMenu<String>(
+              initialSelection: _serviceId,
+              label: const Text('Service'),
+              expandedInsets: EdgeInsets.zero,
+              enableSearch: false,
+              requestFocusOnTap: false,
+              dropdownMenuEntries: [
+                for (final service in widget.activeServices)
+                  DropdownMenuEntry(value: service.id, label: service.name),
+              ],
+              onSelected: _isSubmitting
+                  ? null
+                  : (value) {
+                      if (value == null) return;
+                      setState(() => _serviceId = value);
+                    },
+            ),
+            const SizedBox(height: 16),
+          ],
           TextFormField(
             autovalidateMode: AutovalidateMode.onUserInteraction,
             controller: _nameController,

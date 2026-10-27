@@ -48,5 +48,13 @@ class JwtClaims {
     return null;
   }
 
+  String? get subject {
+    const nameId =
+        'http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier';
+    final raw = _payload['sub'] ?? _payload[nameId];
+    if (raw is String && raw.isNotEmpty) return raw;
+    return null;
+  }
+
   bool hasRole(String expected) => role == expected;
 }

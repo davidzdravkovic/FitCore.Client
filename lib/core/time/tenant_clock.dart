@@ -1,15 +1,17 @@
 import 'package:fitcore_client/core/time/time_zones.dart';
+import 'package:fitcore_client/features/member/auth/member_session.dart';
+import 'package:fitcore_client/features/staff/auth/staff_session.dart';
 import 'package:fitcore_client/features/tenant/auth/tenant_session.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 /// Wall-clock math in the tenant IANA zone; wire/storage stay UTC.
 ///
-/// Falls back to the device's local [tz.local] when session TZ is missing/unknown.
+/// Zone source: tenant admin session, else staff, else member, else device local.
 class TenantClock {
   TenantClock._();
 
   static tz.Location get location {
-    final id = TenantSession.timeZone?.trim();
+    final id = _sessionTimeZone;
     if (id != null && id.isNotEmpty && TimeZones.contains(id)) {
       return tz.getLocation(id);
     }
@@ -19,6 +21,16 @@ class TenantClock {
     } catch (_) {
       return tz.UTC;
     }
+  }
+
+  static String? get _sessionTimeZone {
+    final tenant = TenantSession.timeZone?.trim();
+    if (tenant != null && tenant.isNotEmpty) return tenant;
+    final staff = StaffSession.timeZone?.trim();
+    if (staff != null && staff.isNotEmpty) return staff;
+    final member = MemberSession.timeZone?.trim();
+    if (member != null && member.isNotEmpty) return member;
+    return null;
   }
 
   /// Current instant as a tenant-zone [DateTime] (actually [tz.TZDateTime]).

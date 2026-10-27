@@ -229,4 +229,12 @@ abstract final class CoachDayBoardLayout {
     if (parts.length == 1) return parts.first[0].toUpperCase();
     return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
   }
+
+  /// First name (or sole token) for compact coach pickers.
+  static String shortCoachLabel(String name) {
+    final parts =
+        name.split(' ').where((part) => part.trim().isNotEmpty).toList();
+    if (parts.isEmpty) return name;
+    return parts.first;
+  }
 }

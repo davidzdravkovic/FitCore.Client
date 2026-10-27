@@ -23,11 +23,15 @@ class FitRecordRow {
     required this.cells,
     this.leading,
     this.actions = const <Widget>[],
+    this.depth = 0,
   });
 
   final List<Widget> cells;
   final Widget? leading;
   final List<Widget> actions;
+
+  /// Nested child rows (tree-grid). 0 is a top-level record.
+  final int depth;
 }
 
 /// Dense, scannable record list.
@@ -42,11 +46,20 @@ class FitRecordTable extends StatelessWidget {
     required this.columns,
     required this.rows,
     this.leadingWidth = 36,
+    this.shrinkWrap = true,
+    this.stackBelow = FitCoreBreakpoints.compact,
   });
 
   final List<FitColumn> columns;
   final List<FitRecordRow> rows;
   final double leadingWidth;
+
+  /// Size to children instead of filling the parent. Use when the table sits
+  /// inside another scroll view (nested catalog sections).
+  final bool shrinkWrap;
+
+  /// Below this width, rows stack labelled fields instead of columns.
+  final double stackBelow;
 
   @override
   Widget build(BuildContext context) {
@@ -54,11 +67,12 @@ class FitRecordTable extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
 
-        if (width < FitCoreBreakpoints.compact) {
+        if (width < stackBelow) {
           return _CompactList(
             columns: columns,
             rows: rows,
             leadingWidth: leadingWidth,
+            shrinkWrap: shrinkWrap,
           );
         }
 
@@ -88,6 +102,7 @@ class FitRecordTable extends StatelessWidget {
           rows: rows,
           actionsWidth: actionsWidth,
           leadingWidth: hasLeading ? leadingWidth : 0.0,
+          shrinkWrap: shrinkWrap,
         );
 
         if (minWidth <= width) return table;
@@ -110,6 +125,7 @@ class _WideTable extends StatelessWidget {
     required this.rows,
     required this.actionsWidth,
     required this.leadingWidth,
+    required this.shrinkWrap,
   });
 
   final List<FitColumn> columns;
@@ -117,6 +133,7 @@ class _WideTable extends StatelessWidget {
   final List<FitRecordRow> rows;
   final double actionsWidth;
   final double leadingWidth;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +141,7 @@ class _WideTable extends StatelessWidget {
     final t = context.fc;
 
     return Column(
+      mainAxisSize: shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
@@ -159,23 +177,34 @@ class _WideTable extends StatelessWidget {
             ],
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            primary: false,
-            padding: EdgeInsets.zero,
-            itemCount: rows.length,
-            itemBuilder: (context, index) {
-              return _WideRow(
-                row: rows[index],
-                columns: columns,
-                visible: visible,
-                actionsWidth: actionsWidth,
-                leadingWidth: leadingWidth,
-                isLast: index == rows.length - 1,
-              );
-            },
+        if (shrinkWrap)
+          for (var index = 0; index < rows.length; index++)
+            _WideRow(
+              row: rows[index],
+              columns: columns,
+              visible: visible,
+              actionsWidth: actionsWidth,
+              leadingWidth: leadingWidth,
+              isLast: index == rows.length - 1,
+            )
+        else
+          Expanded(
+            child: ListView.builder(
+              primary: false,
+              padding: EdgeInsets.zero,
+              itemCount: rows.length,
+              itemBuilder: (context, index) {
+                return _WideRow(
+                  row: rows[index],
+                  columns: columns,
+                  visible: visible,
+                  actionsWidth: actionsWidth,
+                  leadingWidth: leadingWidth,
+                  isLast: index == rows.length - 1,
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
@@ -235,7 +264,12 @@ class _WideRowState extends State<_WideRow> {
               Expanded(
                 flex: widget.columns[i].flex,
                 child: Padding(
-                  padding: const EdgeInsets.only(right: FitCoreSpace.x4),
+                  padding: EdgeInsets.only(
+                    left: i == widget.visible.first
+                        ? widget.row.depth * 20.0
+                        : 0,
+                    right: FitCoreSpace.x4,
+                  ),
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: widget.row.cells[i],
@@ -262,79 +296,98 @@ class _CompactList extends StatelessWidget {
     required this.columns,
     required this.rows,
     required this.leadingWidth,
+    required this.shrinkWrap,
   });
 
   final List<FitColumn> columns;
   final List<FitRecordRow> rows;
   final double leadingWidth;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = context.fc;
 
+    Widget item(int index) {
+      final row = rows[index];
+
+      return Container(
+        padding: EdgeInsets.fromLTRB(
+          FitCoreSpace.x4 + row.depth * 20.0,
+          FitCoreSpace.x4,
+          FitCoreSpace.x4,
+          FitCoreSpace.x4,
+        ),
+        decoration: BoxDecoration(
+          border: index == rows.length - 1
+              ? null
+              : Border(bottom: BorderSide(color: t.borderSubtle)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (row.leading != null) ...[
+                  SizedBox(width: leadingWidth, child: row.leading),
+                  const SizedBox(width: FitCoreSpace.x3),
+                ],
+                Expanded(child: row.cells.first),
+              ],
+            ),
+            for (var i = 1; i < columns.length; i++) ...[
+              const SizedBox(height: FitCoreSpace.x2),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      columns[i].label,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: t.textMuted,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: FitCoreSpace.x2),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: row.cells[i],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+            if (row.actions.isNotEmpty) ...[
+              const SizedBox(height: FitCoreSpace.x2),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: row.actions,
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
+    if (shrinkWrap) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < rows.length; index++) item(index),
+        ],
+      );
+    }
+
     return ListView.builder(
       primary: false,
       padding: EdgeInsets.zero,
       itemCount: rows.length,
-      itemBuilder: (context, index) {
-        final row = rows[index];
-
-        return Container(
-          padding: const EdgeInsets.all(FitCoreSpace.x4),
-          decoration: BoxDecoration(
-            border: index == rows.length - 1
-                ? null
-                : Border(bottom: BorderSide(color: t.borderSubtle)),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (row.leading != null) ...[
-                    SizedBox(width: leadingWidth, child: row.leading),
-                    const SizedBox(width: FitCoreSpace.x3),
-                  ],
-                  Expanded(child: row.cells.first),
-                ],
-              ),
-              for (var i = 1; i < columns.length; i++) ...[
-                const SizedBox(height: FitCoreSpace.x2),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 96,
-                      child: Text(
-                        columns[i].label,
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: t.textMuted,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: FitCoreSpace.x2),
-                    Expanded(
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: row.cells[i],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              if (row.actions.isNotEmpty) ...[
-                const SizedBox(height: FitCoreSpace.x2),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: row.actions,
-                ),
-              ],
-            ],
-          ),
-        );
-      },
+      itemBuilder: (context, index) => item(index),
     );
   }
 }

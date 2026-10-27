@@ -21,49 +21,42 @@ class FitEmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     final t = context.fc;
 
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: Padding(
-            padding: const EdgeInsets.all(FitCoreSpace.x8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: t.elevated,
-                    borderRadius: BorderRadius.circular(FitCoreRadius.md),
-                    border: Border.all(color: t.borderDefault),
-                  ),
-                  child: Icon(icon, size: 20, color: t.textMuted),
-                ),
-                const SizedBox(height: FitCoreSpace.x4),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleSmall,
-                ),
-                if (message != null) ...[
-                  const SizedBox(height: FitCoreSpace.x2),
-                  Text(
-                    message!,
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: t.textSecondary,
-                    ),
-                  ),
-                ],
-                if (action != null) ...[
-                  const SizedBox(height: FitCoreSpace.x5),
-                  action!,
-                ],
-              ],
+    return Padding(
+      padding: const EdgeInsets.all(FitCoreSpace.x8),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: t.elevated,
+              borderRadius: BorderRadius.circular(FitCoreRadius.md),
+              border: Border.all(color: t.borderDefault),
             ),
+            child: Icon(icon, size: 20, color: t.textMuted),
           ),
-        ),
+          const SizedBox(height: FitCoreSpace.x4),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleSmall,
+          ),
+          if (message != null) ...[
+            const SizedBox(height: FitCoreSpace.x2),
+            Text(
+              message!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: t.textSecondary,
+              ),
+            ),
+          ],
+          if (action != null) ...[
+            const SizedBox(height: FitCoreSpace.x5),
+            action!,
+          ],
+        ],
       ),
     );
   }
@@ -87,67 +80,60 @@ class FitErrorState extends StatelessWidget {
     final theme = Theme.of(context);
     final t = context.fc;
 
-    return SingleChildScrollView(
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 440),
-          child: Padding(
-            padding: const EdgeInsets.all(FitCoreSpace.x6),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Padding(
+      padding: const EdgeInsets.all(FitCoreSpace.x6),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(FitCoreSpace.x4),
+            decoration: BoxDecoration(
+              color: t.stateNegative.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(FitCoreRadius.md),
+              border: Border.all(
+                color: t.stateNegative.withValues(alpha: 0.35),
+              ),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(FitCoreSpace.x4),
-                  decoration: BoxDecoration(
-                    color: t.stateNegative.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(FitCoreRadius.md),
-                    border: Border.all(
-                      color: t.stateNegative.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Row(
+                Icon(
+                  Icons.error_outline,
+                  size: 18,
+                  color: t.stateNegative,
+                ),
+                const SizedBox(width: FitCoreSpace.x3),
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: 18,
-                        color: t.stateNegative,
-                      ),
-                      const SizedBox(width: FitCoreSpace.x3),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(title, style: theme.textTheme.titleSmall),
-                            const SizedBox(height: FitCoreSpace.x1),
-                            Text(
-                              message,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: t.textSecondary,
-                              ),
-                            ),
-                          ],
+                      Text(title, style: theme.textTheme.titleSmall),
+                      const SizedBox(height: FitCoreSpace.x1),
+                      Text(
+                        message,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: t.textSecondary,
                         ),
                       ),
                     ],
                   ),
                 ),
-                if (onRetry != null) ...[
-                  const SizedBox(height: FitCoreSpace.x4),
-                  Align(
-                    alignment: Alignment.center,
-                    child: OutlinedButton.icon(
-                      onPressed: onRetry,
-                      icon: const Icon(Icons.refresh, size: 16),
-                      label: const Text('Retry'),
-                    ),
-                  ),
-                ],
               ],
             ),
           ),
-        ),
+          if (onRetry != null) ...[
+            const SizedBox(height: FitCoreSpace.x4),
+            Align(
+              alignment: Alignment.center,
+              child: OutlinedButton.icon(
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Retry'),
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -237,6 +223,7 @@ class _FitTableSkeletonState extends State<FitTableSkeleton>
 
         return ListView.builder(
           primary: false,
+          shrinkWrap: true,
           padding: EdgeInsets.zero,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: widget.rows,

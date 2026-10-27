@@ -4,6 +4,7 @@ abstract final class MemberPaths {
   static const login = '/member/login';
   static const activate = '/member/activate';
   static const home = '/member';
+  static const profile = '/member/profile';
 
   static bool matches(String path) =>
       path == root || path.startsWith('$root/');

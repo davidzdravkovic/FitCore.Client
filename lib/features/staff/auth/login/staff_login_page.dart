@@ -28,6 +28,7 @@ class StaffLoginPage extends StatelessWidget {
         StaffSession.set(
           organizationName: response.organizationName,
           firstName: response.firstName,
+          timeZone: response.timeZone,
         );
         context.go(StaffPaths.home);
       },

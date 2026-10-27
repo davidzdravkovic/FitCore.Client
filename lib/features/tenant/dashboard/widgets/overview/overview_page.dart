@@ -164,7 +164,7 @@ class _StatsRow extends StatelessWidget {
           value: '$activeMemberships',
           icon: Icons.card_membership_outlined,
           accent: t.accent,
-          hint: 'Packs currently active',
+          hint: 'Packages currently active',
           compact: phone,
         );
         final visits = card(

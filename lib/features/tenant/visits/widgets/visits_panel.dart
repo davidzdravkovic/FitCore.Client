@@ -1,7 +1,10 @@
 import 'package:fitcore_client/core/theme/fitcore_tokens.dart';
 import 'package:fitcore_client/core/time/tenant_clock.dart';
+import 'package:fitcore_client/core/widgets/fit_data_panel.dart';
 import 'package:fitcore_client/core/widgets/fit_page_header.dart';
 import 'package:fitcore_client/core/widgets/fit_panel_states.dart';
+import 'package:fitcore_client/features/tenant/members/api/members_api.dart';
+import 'package:fitcore_client/features/tenant/memberships/models/membership_response.dart';
 import 'package:fitcore_client/features/tenant/staff/models/staff_response.dart';
 import 'package:fitcore_client/features/tenant/visits/layout/coach_day_board_layout.dart';
 import 'package:fitcore_client/features/tenant/visits/models/visit_resolve_outcome.dart';
@@ -15,9 +18,8 @@ import 'package:fitcore_client/features/tenant/visits/widgets/create_visit_form.
 import 'package:fitcore_client/features/tenant/visits/widgets/record_visit_form.dart';
 import 'package:fitcore_client/features/tenant/visits/widgets/reschedule_visit_form.dart';
 import 'package:fitcore_client/features/tenant/visits/widgets/visit_display.dart';
+import 'package:fitcore_client/features/tenant/visits/widgets/visit_member_sheet.dart';
 import 'package:flutter/material.dart';
-
-enum _VisitAction { complete, noShow, reschedule, voidVisit }
 
 class VisitsPanel extends StatefulWidget {
   const VisitsPanel({super.key, this.controller});
@@ -80,7 +82,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
         return AlertDialog(
           title: const Text('Schedule visit'),
           content: SizedBox(
-            width: 440,
+            width: fitDialogWidth(dialogContext, max: 440),
             child: SingleChildScrollView(
               child: CreateVisitForm(
                 memberships: _controller.schedulableMemberships,
@@ -123,7 +125,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
         return AlertDialog(
           title: const Text('Record past visit'),
           content: SizedBox(
-            width: 440,
+            width: fitDialogWidth(dialogContext, max: 440),
             child: SingleChildScrollView(
               child: RecordVisitForm(
                 memberships: _controller.schedulableMemberships,
@@ -175,7 +177,7 @@ class _VisitsPanelState extends State<VisitsPanel> {
         return AlertDialog(
           title: const Text('Reschedule visit'),
           content: SizedBox(
-            width: 440,
+            width: fitDialogWidth(dialogContext, max: 440),
             child: SingleChildScrollView(
               child: RescheduleVisitForm(
                 visit: visit,
@@ -211,103 +213,34 @@ class _VisitsPanelState extends State<VisitsPanel> {
   }
 
   Future<void> _onVisitTap(VisitResponse visit) async {
-    if (!visit.isVoidable) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            '${visit.memberName} · ${visit.status} '
-            '(${formatLocalDateTime(visit.startAt)})',
-          ),
-        ),
-      );
-      return;
+    MembershipResponse? membership;
+    for (final m in _controller.memberships) {
+      if (m.id == visit.membershipId) {
+        membership = m;
+        break;
+      }
     }
 
-    final action = await showDialog<_VisitAction>(
+    final action = await showVisitMemberSheet(
       context: context,
-      builder: (dialogContext) => _buildActionsDialog(dialogContext, visit),
+      visit: visit,
+      membership: membership,
+      membersApi: MembersApi(),
+      showVisitActions: visit.isVoidable,
     );
 
     if (action == null || !mounted) return;
 
     switch (action) {
-      case _VisitAction.complete:
+      case 'complete':
         await _resolveVisit(visit, VisitResolveOutcome.completed);
-      case _VisitAction.noShow:
+      case 'noShow':
         await _resolveVisit(visit, VisitResolveOutcome.noShow);
-      case _VisitAction.reschedule:
+      case 'reschedule':
         await _openRescheduleForm(visit);
-      case _VisitAction.voidVisit:
+      case 'void':
         await _voidVisit(visit);
     }
-  }
-
-  Widget _buildActionsDialog(BuildContext dialogContext, VisitResponse visit) {
-    final canResolve = visit.canResolveNow;
-    const notStartedYet = 'Available once the visit has started';
-
-    return AlertDialog(
-      title: Text('${visit.memberName} · ${visit.serviceName}'),
-      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-      content: SizedBox(
-        width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
-              child: Text(
-                '${formatLocalDateTime(visit.startAt)} – '
-                '${formatClock(visit.endAt)} · ${visit.coachName}',
-                style: Theme.of(dialogContext).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(dialogContext).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-            ListTile(
-              enabled: canResolve,
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Complete'),
-              subtitle: Text(
-                canResolve ? 'Burns the reserved credit' : notStartedYet,
-              ),
-              onTap: () =>
-                  Navigator.of(dialogContext).pop(_VisitAction.complete),
-            ),
-            ListTile(
-              enabled: canResolve,
-              leading: const Icon(Icons.person_off_outlined),
-              title: const Text('No-show'),
-              subtitle: Text(
-                canResolve ? 'Burns the reserved credit' : notStartedYet,
-              ),
-              onTap: () => Navigator.of(dialogContext).pop(_VisitAction.noShow),
-            ),
-            ListTile(
-              leading: const Icon(Icons.event_repeat_outlined),
-              title: const Text('Reschedule'),
-              subtitle: const Text('Move to another slot or coach'),
-              onTap: () =>
-                  Navigator.of(dialogContext).pop(_VisitAction.reschedule),
-            ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: const Text('Void'),
-              subtitle: const Text('Undo a scheduling mistake'),
-              onTap: () =>
-                  Navigator.of(dialogContext).pop(_VisitAction.voidVisit),
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(),
-          child: const Text('Close'),
-        ),
-      ],
-    );
   }
 
   Future<void> _resolveVisit(
@@ -408,6 +341,78 @@ class _VisitsPanelState extends State<VisitsPanel> {
     _onBoardDayChanged(DateTime(next.year, next.month, next.day));
   }
 
+  Future<void> _openAddSheet() async {
+    final choice = await showModalBottomSheet<_AddVisitChoice>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) {
+        final t = sheetContext.fc;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(
+              FitCoreSpace.x4,
+              0,
+              FitCoreSpace.x4,
+              FitCoreSpace.x4,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  'Add to schedule',
+                  style: Theme.of(sheetContext).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                const SizedBox(height: FitCoreSpace.x3),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.event_available_outlined, color: t.accent),
+                  title: const Text('Schedule visit'),
+                  subtitle: Text(
+                    'Book a future session',
+                    style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                          color: t.textSecondary,
+                        ),
+                  ),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(_AddVisitChoice.schedule),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(Icons.history, color: t.textSecondary),
+                  title: const Text('Record past visit'),
+                  subtitle: Text(
+                    'Log a session that already happened',
+                    style: Theme.of(sheetContext).textTheme.bodySmall?.copyWith(
+                          color: t.textSecondary,
+                        ),
+                  ),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(_AddVisitChoice.record),
+                ),
+                const SizedBox(height: FitCoreSpace.x2),
+                TextButton(
+                  onPressed: () => Navigator.of(sheetContext).pop(),
+                  child: const Text('Cancel'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || choice == null) return;
+    switch (choice) {
+      case _AddVisitChoice.schedule:
+        await _openCreateForm();
+      case _AddVisitChoice.record:
+        await _openRecordForm();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
@@ -418,7 +423,16 @@ class _VisitsPanelState extends State<VisitsPanel> {
     return ListenableBuilder(
       listenable: _controller,
       builder: (context, _) {
-        // One calendar toolbar: day nav + primary actions (Google Calendar style).
+        final body = Padding(
+          padding: EdgeInsets.fromLTRB(
+            pad,
+            0,
+            pad,
+            phone ? FitCoreSpace.x3 + 72 : pad,
+          ),
+          child: _buildBody(),
+        );
+
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -436,10 +450,22 @@ class _VisitsPanelState extends State<VisitsPanel> {
               ),
             ),
             Expanded(
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(pad, 0, pad, pad),
-                child: _buildBody(),
-              ),
+              child: phone
+                  ? Stack(
+                      children: [
+                        Positioned.fill(child: body),
+                        Positioned(
+                          right: pad,
+                          bottom: FitCoreSpace.x3,
+                          child: FloatingActionButton(
+                            onPressed: _openAddSheet,
+                            tooltip: 'Add to schedule',
+                            child: const Icon(Icons.add),
+                          ),
+                        ),
+                      ],
+                    )
+                  : body,
             ),
           ],
         );
@@ -463,22 +489,17 @@ class _VisitsPanelState extends State<VisitsPanel> {
     final schedule = FilledButton.icon(
       onPressed: () => _openCreateForm(),
       icon: const Icon(Icons.add, size: 16),
-      label: Text(phone ? 'Schedule' : 'Schedule visit'),
+      label: const Text('Schedule visit'),
     );
 
-    final record = phone
-        ? IconButton(
-            onPressed: _openRecordForm,
-            icon: const Icon(Icons.history, size: 18),
-            tooltip: 'Record past visit',
-          )
-        : TextButton.icon(
-            onPressed: _openRecordForm,
-            icon: const Icon(Icons.history, size: 16),
-            label: const Text('Record past visit'),
-          );
+    final record = TextButton.icon(
+      onPressed: _openRecordForm,
+      icon: const Icon(Icons.history, size: 16),
+      label: const Text('Record past visit'),
+    );
 
     if (!showDayNav) {
+      if (phone) return const SizedBox.shrink();
       return Row(
         children: [
           const Spacer(),
@@ -489,53 +510,46 @@ class _VisitsPanelState extends State<VisitsPanel> {
       );
     }
 
-    final stepper = Container(
-      decoration: BoxDecoration(
-        color: t.panel,
-        borderRadius: BorderRadius.circular(FitCoreRadius.md),
-        border: Border.all(color: t.borderDefault),
+    final prev = SizedBox(
+      width: 44,
+      height: 44,
+      child: IconButton(
+        onPressed: () => _shiftDay(-1),
+        tooltip: 'Previous day',
+        padding: EdgeInsets.zero,
+        iconSize: 22,
+        icon: const Icon(Icons.chevron_left),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: IconButton(
-              onPressed: () => _shiftDay(-1),
-              tooltip: 'Previous day',
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.chevron_left),
-            ),
-          ),
-          Container(width: 1, height: 22, color: t.borderSubtle),
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: IconButton(
-              onPressed: () => _shiftDay(1),
-              tooltip: 'Next day',
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: const Icon(Icons.chevron_right),
-            ),
-          ),
-        ],
+    );
+
+    final next = SizedBox(
+      width: 44,
+      height: 44,
+      child: IconButton(
+        onPressed: () => _shiftDay(1),
+        tooltip: 'Next day',
+        padding: EdgeInsets.zero,
+        iconSize: 22,
+        icon: const Icon(Icons.chevron_right),
       ),
     );
 
     final today = phone
-        ? IconButton(
-            onPressed: isToday
-                ? null
-                : () {
-                    final now = TenantClock.now();
-                    _onBoardDayChanged(DateTime(now.year, now.month, now.day));
-                  },
-            icon: const Icon(Icons.today_outlined, size: 18),
-            tooltip: 'Today',
-            visualDensity: VisualDensity.compact,
+        ? SizedBox(
+            width: 44,
+            height: 44,
+            child: IconButton(
+              onPressed: isToday
+                  ? null
+                  : () {
+                      final now = TenantClock.now();
+                      _onBoardDayChanged(
+                        DateTime(now.year, now.month, now.day),
+                      );
+                    },
+              icon: const Icon(Icons.today_outlined, size: 22),
+              tooltip: 'Today',
+            ),
           )
         : OutlinedButton(
             onPressed: isToday
@@ -556,13 +570,18 @@ class _VisitsPanelState extends State<VisitsPanel> {
           vertical: FitCoreSpace.x2,
         ),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              formatDayHeadline(_day, compact: phone),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.titleSmall,
+            Flexible(
+              child: Text(
+                formatDayHeadline(_day, compact: phone),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
             const SizedBox(width: FitCoreSpace.x1),
             Icon(Icons.expand_more, size: 18, color: t.textSecondary),
@@ -577,29 +596,43 @@ class _VisitsPanelState extends State<VisitsPanel> {
     );
 
     if (phone) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              stepper,
-              const SizedBox(width: FitCoreSpace.x2),
-              Expanded(child: dayPicker),
-              today,
-              count,
-            ],
-          ),
-          const SizedBox(height: FitCoreSpace.x2),
-          Row(
-            children: [
-              record,
-              const Spacer(),
-              schedule,
-            ],
-          ),
-        ],
+      return Container(
+        decoration: BoxDecoration(
+          color: t.panel,
+          borderRadius: BorderRadius.circular(FitCoreRadius.md),
+          border: Border.all(color: t.borderDefault),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: FitCoreSpace.x1),
+        child: Row(
+          children: [
+            prev,
+            Expanded(child: dayPicker),
+            next,
+            today,
+            Padding(
+              padding: const EdgeInsets.only(right: FitCoreSpace.x2),
+              child: count,
+            ),
+          ],
+        ),
       );
     }
+
+    final stepper = Container(
+      decoration: BoxDecoration(
+        color: t.panel,
+        borderRadius: BorderRadius.circular(FitCoreRadius.md),
+        border: Border.all(color: t.borderDefault),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          prev,
+          Container(width: 1, height: 22, color: t.borderSubtle),
+          next,
+        ],
+      ),
+    );
 
     return Row(
       children: [
@@ -661,3 +694,5 @@ class _VisitsPanelState extends State<VisitsPanel> {
     );
   }
 }
+
+enum _AddVisitChoice { schedule, record }

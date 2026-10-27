@@ -41,10 +41,14 @@ class VisitResponse {
 
   bool get isReschedulable => _isScheduled;
 
-  /// The API refuses a resolve before the visit has started.
-  bool get canResolveNow =>
-      _isScheduled &&
-      !TenantClock.now().toUtc().isBefore(startAt.toUtc());
+  /// API refuses resolve before start. Compare in the same zone the calendar
+  /// paints so a 16:00–17:00 visit unlocks Complete/No-show after 16:00.
+  bool get canResolveNow {
+    if (!_isScheduled) return false;
+    final start = TenantClock.toTenant(startAt);
+    final now = TenantClock.now();
+    return !now.isBefore(start);
+  }
 
   factory VisitResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
@@ -57,18 +61,43 @@ class VisitResponse {
       coachName: map['coachName'] as String? ?? '',
       serviceId: map['serviceId'] as String? ?? '',
       serviceName: map['serviceName'] as String? ?? '',
-      startAt: DateTime.tryParse(map['startAt'] as String? ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
-      endAt: DateTime.tryParse(map['endAt'] as String? ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      startAt: _parseInstant(map['startAt']),
+      endAt: _parseInstant(map['endAt']),
       status: map['status'] as String? ?? '',
       consumedSessionCredit: map['consumedSessionCredit'] as bool? ?? false,
-      createdAt: DateTime.tryParse(map['createdAt'] as String? ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
+      createdAt: _parseInstant(map['createdAt']),
       voidNote: map['voidNote'] as String?,
       voidedAt: map['voidedAt'] == null
           ? null
-          : DateTime.tryParse(map['voidedAt'] as String? ?? ''),
+          : _parseInstant(map['voidedAt']),
+    );
+  }
+
+  /// API stores UTC. Bare ISO without `Z`/offset must not be read as device-local
+  /// (that shifts the instant and keeps Complete/No-show grey after the session).
+  static DateTime _parseInstant(dynamic raw) {
+    final s = (raw as String? ?? '').trim();
+    if (s.isEmpty) {
+      return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    }
+    final parsed = DateTime.tryParse(s);
+    if (parsed == null) {
+      return DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
+    }
+    if (parsed.isUtc) return parsed;
+    final hasOffset = s.endsWith('Z') ||
+        s.contains('+') ||
+        RegExp(r'-\d{2}:\d{2}$').hasMatch(s);
+    if (hasOffset) return parsed.toUtc();
+    return DateTime.utc(
+      parsed.year,
+      parsed.month,
+      parsed.day,
+      parsed.hour,
+      parsed.minute,
+      parsed.second,
+      parsed.millisecond,
+      parsed.microsecond,
     );
   }
 }

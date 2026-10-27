@@ -4,12 +4,14 @@ class MemberSessionResponse {
     required this.accessToken,
     required this.organizationName,
     required this.firstName,
+    required this.timeZone,
   });
 
   final String message;
   final String accessToken;
   final String organizationName;
   final String firstName;
+  final String timeZone;
 
   factory MemberSessionResponse.fromJson(dynamic json) {
     final map = json as Map<String, dynamic>? ?? {};
@@ -18,6 +20,7 @@ class MemberSessionResponse {
       accessToken: map['accessToken'] as String? ?? '',
       organizationName: map['organizationName'] as String? ?? '',
       firstName: map['firstName'] as String? ?? '',
+      timeZone: map['timeZone'] as String? ?? '',
     );
   }
 }

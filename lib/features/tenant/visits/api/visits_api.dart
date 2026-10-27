@@ -7,9 +7,11 @@ import 'package:fitcore_client/features/tenant/visits/models/visit_response.dart
 import 'package:fitcore_client/features/tenant/visits/models/void_visit_request.dart';
 
 class VisitsApi {
-  VisitsApi({ApiClient? client}) : _client = client ?? ApiClient.instance;
+  VisitsApi({ApiClient? client, this.basePath = '/api/visits'})
+      : _client = client ?? ApiClient.instance;
 
   final ApiClient _client;
+  final String basePath;
 
   Future<List<VisitResponse>> list({DateTime? from, DateTime? to}) {
     final params = <String, String>{};
@@ -25,7 +27,7 @@ class VisitsApi {
         : '?${params.entries.map((e) => '${e.key}=${Uri.encodeQueryComponent(e.value)}').join('&')}';
 
     return _client.request<List<VisitResponse>>(
-      '/api/visits$query',
+      '$basePath$query',
       parse: (json) {
         final items = json as List<dynamic>? ?? const [];
         return items.map(VisitResponse.fromJson).toList();
@@ -35,7 +37,7 @@ class VisitsApi {
 
   Future<VisitResponse> create(CreateVisitRequest request) {
     return _client.request<VisitResponse>(
-      '/api/visits',
+      basePath,
       method: 'POST',
       data: request.toJson(),
       parse: VisitResponse.fromJson,
@@ -44,7 +46,7 @@ class VisitsApi {
 
   Future<VisitResponse> record(RecordVisitRequest request) {
     return _client.request<VisitResponse>(
-      '/api/visits/record',
+      '$basePath/record',
       method: 'POST',
       data: request.toJson(),
       parse: VisitResponse.fromJson,
@@ -53,7 +55,7 @@ class VisitsApi {
 
   Future<VisitResponse> resolve(String id, ResolveVisitRequest request) {
     return _client.request<VisitResponse>(
-      '/api/visits/$id/resolve',
+      '$basePath/$id/resolve',
       method: 'POST',
       data: request.toJson(),
       parse: VisitResponse.fromJson,
@@ -62,7 +64,7 @@ class VisitsApi {
 
   Future<VisitResponse> reschedule(String id, RescheduleVisitRequest request) {
     return _client.request<VisitResponse>(
-      '/api/visits/$id/reschedule',
+      '$basePath/$id/reschedule',
       method: 'POST',
       data: request.toJson(),
       parse: VisitResponse.fromJson,
@@ -71,7 +73,7 @@ class VisitsApi {
 
   Future<VisitResponse> voidVisit(String id, VoidVisitRequest request) {
     return _client.request<VisitResponse>(
-      '/api/visits/$id/void',
+      '$basePath/$id/void',
       method: 'POST',
       data: request.toJson(),
       parse: VisitResponse.fromJson,
